@@ -295,7 +295,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				0EFE363A2F00438900B76710 /* FormativeiOSTests.swift in Sources */,
 				0EFE363B2F00438900B76710 /* FormativeiOSUITests.swift in Sources */,
 				0EFE363C2F00438900B76710 /* FormativeiOSApp.swift in Sources */,
 				0EFE363D2F00438900B76710 /* FormativeiOSUITestsLaunchTests.swift in Sources */,
@@ -307,6 +306,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0EFE363A2F00438900B76710 /* FormativeiOSTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EFE36322F00438900B76710 /* FormativeiOSTests.swift */; };
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
