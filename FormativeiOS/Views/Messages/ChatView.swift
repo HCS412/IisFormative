@@ -138,7 +138,7 @@ struct MessageBubble: View {
                     .overlay(
                         // Tail
                         MessageTail(isCurrentUser: isCurrentUser)
-                            .fill(isCurrentUser ? LinearGradient.brand : Color.adaptiveSurface())
+                            .fill(isCurrentUser ? AnyShapeStyle(LinearGradient.brand) : AnyShapeStyle(Color.adaptiveSurface()))
                             .frame(width: 8, height: 8)
                             .offset(x: isCurrentUser ? 4 : -4, y: 4)
                     )

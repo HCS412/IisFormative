@@ -7,12 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		0EFE36392F00438900B76710 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 0EFE362D2F00438900B76710 /* Assets.xcassets */; };
-		0EFE363A2F00438900B76710 /* FormativeiOSTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EFE36322F00438900B76710 /* FormativeiOSTests.swift */; };
-		0EFE363B2F00438900B76710 /* FormativeiOSUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EFE36342F00438900B76710 /* FormativeiOSUITests.swift */; };
-		0EFE363C2F00438900B76710 /* FormativeiOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EFE362F2F00438900B76710 /* FormativeiOSApp.swift */; };
-		0EFE363D2F00438900B76710 /* FormativeiOSUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EFE36352F00438900B76710 /* FormativeiOSUITestsLaunchTests.swift */; };
-		0EFE363E2F00438900B76710 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EFE362E2F00438900B76710 /* ContentView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -36,12 +30,6 @@
 		0EFE36032F00435300B76710 /* FormativeiOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FormativeiOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		0EFE36102F00435700B76710 /* FormativeiOSTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FormativeiOSTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		0EFE361A2F00435700B76710 /* FormativeiOSUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FormativeiOSUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		0EFE362D2F00438900B76710 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		0EFE362E2F00438900B76710 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
-		0EFE362F2F00438900B76710 /* FormativeiOSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FormativeiOSApp.swift; sourceTree = "<group>"; };
-		0EFE36322F00438900B76710 /* FormativeiOSTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FormativeiOSTests.swift; sourceTree = "<group>"; };
-		0EFE36342F00438900B76710 /* FormativeiOSUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FormativeiOSUITests.swift; sourceTree = "<group>"; };
-		0EFE36352F00438900B76710 /* FormativeiOSUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FormativeiOSUITestsLaunchTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -227,7 +215,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				0EFE36392F00438900B76710 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -252,8 +239,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				0EFE363C2F00438900B76710 /* FormativeiOSApp.swift in Sources */,
-				0EFE363E2F00438900B76710 /* ContentView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -261,7 +246,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				0EFE363A2F00438900B76710 /* FormativeiOSTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
