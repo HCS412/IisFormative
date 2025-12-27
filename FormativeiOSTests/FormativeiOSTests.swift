@@ -5,13 +5,14 @@
 //  Created by Brandon Brooks on 12/27/25.
 //
 
-import Testing
+import XCTest
 @testable import FormativeiOS
 
-struct FormativeiOSTests {
+final class FormativeiOSTests: XCTestCase {
 
-    @Test func example() async throws {
-        // Write your test here and use APIs like `#expect(...)` to check expected conditions.
+    func testExample() throws {
+        // Write your test here
+        XCTAssertTrue(true, "Example test")
     }
 
 }

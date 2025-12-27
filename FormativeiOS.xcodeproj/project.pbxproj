@@ -6,6 +6,15 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		0EFE36392F00438900B76710 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 0EFE362D2F00438900B76710 /* Assets.xcassets */; };
+		0EFE363A2F00438900B76710 /* FormativeiOSTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EFE36322F00438900B76710 /* FormativeiOSTests.swift */; };
+		0EFE363B2F00438900B76710 /* FormativeiOSUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EFE36342F00438900B76710 /* FormativeiOSUITests.swift */; };
+		0EFE363C2F00438900B76710 /* FormativeiOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EFE362F2F00438900B76710 /* FormativeiOSApp.swift */; };
+		0EFE363D2F00438900B76710 /* FormativeiOSUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EFE36352F00438900B76710 /* FormativeiOSUITestsLaunchTests.swift */; };
+		0EFE363E2F00438900B76710 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EFE362E2F00438900B76710 /* ContentView.swift */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		0EFE36112F00435700B76710 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -27,6 +36,13 @@
 		0EFE36032F00435300B76710 /* FormativeiOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FormativeiOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		0EFE36102F00435700B76710 /* FormativeiOSTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FormativeiOSTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		0EFE361A2F00435700B76710 /* FormativeiOSUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FormativeiOSUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		0EFE362D2F00438900B76710 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		0EFE362E2F00438900B76710 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		0EFE362F2F00438900B76710 /* FormativeiOSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FormativeiOSApp.swift; sourceTree = "<group>"; };
+		0EFE36312F00438900B76710 /* FormativeiOS.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = FormativeiOS.xcodeproj; sourceTree = "<group>"; };
+		0EFE36322F00438900B76710 /* FormativeiOSTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FormativeiOSTests.swift; sourceTree = "<group>"; };
+		0EFE36342F00438900B76710 /* FormativeiOSUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FormativeiOSUITests.swift; sourceTree = "<group>"; };
+		0EFE36352F00438900B76710 /* FormativeiOSUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FormativeiOSUITestsLaunchTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -75,6 +91,10 @@
 		0EFE35FA2F00435300B76710 = {
 			isa = PBXGroup;
 			children = (
+				0EFE36302F00438900B76710 /* FormativeiOS */,
+				0EFE36312F00438900B76710 /* FormativeiOS.xcodeproj */,
+				0EFE36332F00438900B76710 /* FormativeiOSTests */,
+				0EFE36362F00438900B76710 /* FormativeiOSUITests */,
 				0EFE36052F00435300B76710 /* FormativeiOS */,
 				0EFE36132F00435700B76710 /* FormativeiOSTests */,
 				0EFE361D2F00435700B76710 /* FormativeiOSUITests */,
@@ -89,6 +109,38 @@
 				0EFE36102F00435700B76710 /* FormativeiOSTests.xctest */,
 				0EFE361A2F00435700B76710 /* FormativeiOSUITests.xctest */,
 			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		0EFE36302F00438900B76710 /* FormativeiOS */ = {
+			isa = PBXGroup;
+			children = (
+				0EFE362D2F00438900B76710 /* Assets.xcassets */,
+				0EFE362E2F00438900B76710 /* ContentView.swift */,
+				0EFE362F2F00438900B76710 /* FormativeiOSApp.swift */,
+			);
+			path = FormativeiOS;
+			sourceTree = "<group>";
+		};
+		0EFE36332F00438900B76710 /* FormativeiOSTests */ = {
+			isa = PBXGroup;
+			children = (
+				0EFE36322F00438900B76710 /* FormativeiOSTests.swift */,
+			);
+			path = FormativeiOSTests;
+			sourceTree = "<group>";
+		};
+		0EFE36362F00438900B76710 /* FormativeiOSUITests */ = {
+			isa = PBXGroup;
+			children = (
+				0EFE36342F00438900B76710 /* FormativeiOSUITests.swift */,
+				0EFE36352F00438900B76710 /* FormativeiOSUITestsLaunchTests.swift */,
+			);
+			path = FormativeiOSUITests;
+			sourceTree = "<group>";
+		};
+		0EFE36372F00438900B76710 /* Products */ = {
+			isa = PBXGroup;
 			name = Products;
 			sourceTree = "<group>";
 		};
@@ -198,6 +250,12 @@
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 0EFE36042F00435300B76710 /* Products */;
 			projectDirPath = "";
+			projectReferences = (
+				{
+					ProductGroup = 0EFE36372F00438900B76710 /* Products */;
+					ProjectRef = 0EFE36312F00438900B76710 /* FormativeiOS.xcodeproj */;
+				},
+			);
 			projectRoot = "";
 			targets = (
 				0EFE36022F00435300B76710 /* FormativeiOS */,
@@ -212,6 +270,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0EFE36392F00438900B76710 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -236,6 +295,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0EFE363A2F00438900B76710 /* FormativeiOSTests.swift in Sources */,
+				0EFE363B2F00438900B76710 /* FormativeiOSUITests.swift in Sources */,
+				0EFE363C2F00438900B76710 /* FormativeiOSApp.swift in Sources */,
+				0EFE363D2F00438900B76710 /* FormativeiOSUITestsLaunchTests.swift in Sources */,
+				0EFE363E2F00438900B76710 /* ContentView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
