@@ -27,7 +27,7 @@ struct OpportunitiesListView: View {
             opportunities = opportunities.filter { opp in
                 opp.title.localizedCaseInsensitiveContains(searchText) ||
                 opp.description.localizedCaseInsensitiveContains(searchText) ||
-                (opp.company?.localizedCaseInsensitiveContains(searchText) ?? false)
+                (opp.industry?.localizedCaseInsensitiveContains(searchText) ?? false)
             }
         }
         
@@ -179,16 +179,23 @@ struct OpportunityCard: View {
                         Text(opportunity.title)
                             .font(.headline)
                             .foregroundColor(.adaptiveTextPrimary())
-                        
-                        if let company = opportunity.company {
-                            Text(company)
-                                .font(.subhead)
-                                .foregroundColor(.textSecondary)
+
+                        HStack(spacing: .spacingS) {
+                            if let industry = opportunity.industry {
+                                Text(industry.capitalized)
+                                    .font(.subhead)
+                                    .foregroundColor(.textSecondary)
+                            }
+                            if opportunity.createdByName != nil {
+                                Text("by \(opportunity.companyName)")
+                                    .font(.subhead)
+                                    .foregroundColor(.textSecondary)
+                            }
                         }
                     }
-                    
+
                     Spacer()
-                    
+
                     if let type = opportunity.type {
                         Text(type.uppercased())
                             .font(.caption2)
@@ -200,35 +207,38 @@ struct OpportunityCard: View {
                             .cornerRadius(.radiusSmall)
                     }
                 }
-                
+
                 // Description Preview
                 Text(opportunity.description)
                     .font(.caption)
                     .foregroundColor(.textSecondary)
                     .lineLimit(2)
-                
+
                 // Details Row
                 HStack(spacing: .spacingL) {
-                    if let location = opportunity.location {
+                    if opportunity.isRemote == true {
+                        Label("Remote", systemImage: "wifi")
+                            .font(.caption)
+                            .foregroundColor(.success)
+                    } else if let location = opportunity.location {
                         Label(location, systemImage: "location.fill")
                             .font(.caption)
                             .foregroundColor(.textSecondary)
                     }
-                    
-                    if let compensation = opportunity.compensation {
-                        Label(compensation, systemImage: "dollarsign.circle.fill")
-                            .font(.caption)
-                            .foregroundColor(.textSecondary)
-                    }
+
+                    Label(opportunity.budget, systemImage: "dollarsign.circle.fill")
+                        .font(.caption)
+                        .foregroundColor(.textSecondary)
                 }
-                
-                // Deadline
-                if let deadline = opportunity.deadline {
+
+                // Status badge
+                if let status = opportunity.status {
                     HStack {
-                        Image(systemName: "calendar")
+                        Circle()
+                            .fill(status == "active" ? Color.success : Color.textSecondary)
+                            .frame(width: 8, height: 8)
+                        Text(status.capitalized)
                             .font(.caption2)
-                        Text("Deadline: \(deadline)")
-                            .font(.caption)
                     }
                     .foregroundColor(.textSecondary)
                 }

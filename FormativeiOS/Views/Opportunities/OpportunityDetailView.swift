@@ -13,7 +13,7 @@ struct OpportunityDetailView: View {
     @State private var isDescriptionExpanded = false
     @State private var scrollOffset: CGFloat = 0
     @State private var showHeader = false
-    
+
     var body: some View {
         ZStack(alignment: .bottom) {
             ScrollView {
@@ -22,27 +22,27 @@ struct OpportunityDetailView: View {
                     heroSection
                         .padding(.horizontal, .spacingL)
                         .padding(.top, .spacingL)
-                    
+
                     // Details Section
                     detailsSection
                         .padding(.horizontal, .spacingL)
-                    
+
                     // Description Section
                     descriptionSection
                         .padding(.horizontal, .spacingL)
-                    
+
                     // Requirements Section
                     if let requirements = opportunity.requirements, !requirements.isEmpty {
                         requirementsSection(requirements: requirements)
                             .padding(.horizontal, .spacingL)
                     }
-                    
+
                     // Brand Preview Card
-                    if let company = opportunity.company {
-                        brandPreviewSection(company: company)
+                    if opportunity.createdByName != nil {
+                        brandPreviewSection
                             .padding(.horizontal, .spacingL)
                     }
-                    
+
                     // Spacer for floating button
                     Spacer(minLength: 100)
                 }
@@ -60,7 +60,7 @@ struct OpportunityDetailView: View {
                     showHeader = scrollOffset < -50
                 }
             }
-            
+
             // Floating Apply Button
             VStack {
                 Spacer()
@@ -82,7 +82,6 @@ struct OpportunityDetailView: View {
             ToolbarItem(placement: .primaryAction) {
                 Button(action: {
                     Haptics.selection()
-                    // Share functionality
                 }) {
                     Image(systemName: "square.and.arrow.up")
                 }
@@ -92,7 +91,7 @@ struct OpportunityDetailView: View {
             ApplyToOpportunityView(opportunityId: opportunity.id)
         }
     }
-    
+
     // MARK: - Hero Section
     private var heroSection: some View {
         VStack(alignment: .leading, spacing: .spacingM) {
@@ -102,16 +101,23 @@ struct OpportunityDetailView: View {
                         .font(.title1)
                         .fontWeight(.bold)
                         .foregroundColor(.adaptiveTextPrimary())
-                    
-                    if let company = opportunity.company {
-                        Text(company)
-                            .font(.title3)
-                            .foregroundColor(.textSecondary)
+
+                    HStack(spacing: .spacingS) {
+                        if let industry = opportunity.industry {
+                            Text(industry.capitalized)
+                                .font(.title3)
+                                .foregroundColor(.textSecondary)
+                        }
+                        if opportunity.createdByName != nil {
+                            Text("• \(opportunity.companyName)")
+                                .font(.title3)
+                                .foregroundColor(.textSecondary)
+                        }
                     }
                 }
-                
+
                 Spacer()
-                
+
                 if let type = opportunity.type {
                     Text(type.uppercased())
                         .font(.caption)
@@ -123,24 +129,26 @@ struct OpportunityDetailView: View {
                         .cornerRadius(.radiusSmall)
                 }
             }
-            
+
             // Quick Info Row
             HStack(spacing: .spacingL) {
-                if let location = opportunity.location {
+                if opportunity.isRemote == true {
+                    Label("Remote", systemImage: "wifi")
+                        .font(.subhead)
+                        .foregroundColor(.success)
+                } else if let location = opportunity.location {
                     Label(location, systemImage: "location.fill")
                         .font(.subhead)
                         .foregroundColor(.textSecondary)
                 }
-                
-                if let compensation = opportunity.compensation {
-                    Label(compensation, systemImage: "dollarsign.circle.fill")
-                        .font(.subhead)
-                        .foregroundColor(.textSecondary)
-                }
+
+                Label(opportunity.budget, systemImage: "dollarsign.circle.fill")
+                    .font(.subhead)
+                    .foregroundColor(.textSecondary)
             }
         }
     }
-    
+
     // MARK: - Details Section
     private var detailsSection: some View {
         GlassCard {
@@ -160,10 +168,9 @@ struct OpportunityDetailView: View {
                         }
                         Spacer()
                     }
+                    Divider()
                 }
-                
-                Divider()
-                
+
                 if let type = opportunity.type {
                     HStack {
                         Image(systemName: "briefcase.fill")
@@ -179,11 +186,29 @@ struct OpportunityDetailView: View {
                         }
                         Spacer()
                     }
+                    Divider()
+                }
+
+                if let industry = opportunity.industry {
+                    HStack {
+                        Image(systemName: "building.2.fill")
+                            .foregroundColor(.brandPrimary)
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Industry")
+                                .font(.caption)
+                                .foregroundColor(.textSecondary)
+                            Text(industry.capitalized)
+                                .font(.subhead)
+                                .fontWeight(.semibold)
+                                .foregroundColor(.adaptiveTextPrimary())
+                        }
+                        Spacer()
+                    }
                 }
             }
         }
     }
-    
+
     // MARK: - Description Section
     private var descriptionSection: some View {
         VStack(alignment: .leading, spacing: .spacingM) {
@@ -197,16 +222,16 @@ struct OpportunityDetailView: View {
                     Text("Description")
                         .font(.headline)
                         .foregroundColor(.adaptiveTextPrimary())
-                    
+
                     Spacer()
-                    
+
                     Image(systemName: isDescriptionExpanded ? "chevron.up" : "chevron.down")
                         .font(.caption)
                         .foregroundColor(.textSecondary)
                 }
             }
             .buttonStyle(.plain)
-            
+
             if isDescriptionExpanded {
                 Text(opportunity.description)
                     .font(.body)
@@ -220,14 +245,14 @@ struct OpportunityDetailView: View {
             }
         }
     }
-    
+
     // MARK: - Requirements Section
     private func requirementsSection(requirements: [String]) -> some View {
         VStack(alignment: .leading, spacing: .spacingM) {
             Text("Requirements")
                 .font(.headline)
                 .foregroundColor(.adaptiveTextPrimary())
-            
+
             GlassCard {
                 VStack(alignment: .leading, spacing: .spacingM) {
                     ForEach(Array(requirements.enumerated()), id: \.offset) { index, requirement in
@@ -235,14 +260,14 @@ struct OpportunityDetailView: View {
                             Image(systemName: "checkmark.circle.fill")
                                 .foregroundColor(.success)
                                 .font(.subhead)
-                            
+
                             Text(requirement)
                                 .font(.body)
                                 .foregroundColor(.adaptiveTextPrimary())
-                            
+
                             Spacer()
                         }
-                        
+
                         if index < requirements.count - 1 {
                             Divider()
                         }
@@ -251,44 +276,37 @@ struct OpportunityDetailView: View {
             }
         }
     }
-    
+
     // MARK: - Brand Preview
-    private func brandPreviewSection(company: String) -> some View {
+    private var brandPreviewSection: some View {
         VStack(alignment: .leading, spacing: .spacingM) {
-            Text("About \(company)")
+            Text("Posted by")
                 .font(.headline)
                 .foregroundColor(.adaptiveTextPrimary())
-            
+
             GlassCard {
                 HStack(spacing: .spacingM) {
-                    // Placeholder for brand logo
                     Circle()
                         .fill(LinearGradient.brand)
                         .frame(width: 60, height: 60)
                         .overlay(
-                            Text(String(company.prefix(1)))
+                            Text(String(opportunity.companyName.prefix(1)))
                                 .font(.title2)
                                 .fontWeight(.bold)
                                 .foregroundColor(.white)
                         )
-                    
+
                     VStack(alignment: .leading, spacing: 4) {
-                        Text(company)
+                        Text(opportunity.companyName)
                             .font(.headline)
                             .foregroundColor(.adaptiveTextPrimary())
-                        
-                        Text("Verified Brand")
+
+                        Text("Verified")
                             .font(.caption)
                             .foregroundColor(.textSecondary)
                     }
-                    
+
                     Spacer()
-                    
-                    Button(action: {}) {
-                        Text("View Profile")
-                            .font(.caption)
-                            .foregroundColor(.brandPrimary)
-                    }
                 }
             }
         }
@@ -305,7 +323,7 @@ struct ScrollOffsetPreferenceKey: PreferenceKey {
 
 // MARK: - Apply View
 struct ApplyToOpportunityView: View {
-    let opportunityId: String
+    let opportunityId: Int
     @Environment(\.dismiss) var dismiss
     @State private var message = ""
     @State private var proposedRate = ""
@@ -313,7 +331,7 @@ struct ApplyToOpportunityView: View {
     @State private var newLink = ""
     @State private var isSubmitting = false
     @State private var showSuccess = false
-    
+
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -323,7 +341,7 @@ struct ApplyToOpportunityView: View {
                         Text("Cover Message")
                             .font(.headline)
                             .foregroundColor(.adaptiveTextPrimary())
-                        
+
                         TextEditor(text: $message)
                             .frame(minHeight: 150)
                             .padding(.spacingM)
@@ -333,7 +351,7 @@ struct ApplyToOpportunityView: View {
                                 RoundedRectangle(cornerRadius: .radiusSmall)
                                     .stroke(Color.separator, lineWidth: 1)
                             )
-                        
+
                         Text("\(message.count) / 500")
                             .font(.caption)
                             .foregroundColor(.textSecondary)
@@ -341,13 +359,13 @@ struct ApplyToOpportunityView: View {
                     }
                     .padding(.horizontal, .spacingL)
                     .padding(.top, .spacingL)
-                    
+
                     // Proposed Rate
                     VStack(alignment: .leading, spacing: .spacingM) {
                         Text("Proposed Rate (Optional)")
                             .font(.headline)
                             .foregroundColor(.adaptiveTextPrimary())
-                        
+
                         FormTextField(
                             title: "Rate",
                             text: $proposedRate,
@@ -357,13 +375,13 @@ struct ApplyToOpportunityView: View {
                         )
                     }
                     .padding(.horizontal, .spacingL)
-                    
+
                     // Portfolio Links
                     VStack(alignment: .leading, spacing: .spacingM) {
                         Text("Portfolio Links")
                             .font(.headline)
                             .foregroundColor(.adaptiveTextPrimary())
-                        
+
                         ForEach(portfolioLinks, id: \.self) { link in
                             HStack {
                                 Text(link)
@@ -380,13 +398,13 @@ struct ApplyToOpportunityView: View {
                             .background(Color.adaptiveSurface())
                             .cornerRadius(.radiusSmall)
                         }
-                        
+
                         HStack {
                             TextField("Add portfolio link", text: $newLink)
                                 .textFieldStyle(.roundedBorder)
                                 .autocapitalization(.none)
                                 .keyboardType(.URL)
-                            
+
                             Button(action: {
                                 if !newLink.isEmpty {
                                     portfolioLinks.append(newLink)
@@ -428,10 +446,10 @@ struct ApplyToOpportunityView: View {
             }
         }
     }
-    
+
     private func submitApplication() {
         isSubmitting = true
-        // API call here
+        // TODO: Connect to actual API
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
             isSubmitting = false
             showSuccess = true
@@ -445,19 +463,19 @@ struct SuccessOverlay: View {
     let onDismiss: () -> Void
     @State private var scale: CGFloat = 0.5
     @State private var opacity: Double = 0
-    
+
     var body: some View {
         ZStack {
             Color.black.opacity(0.5)
                 .ignoresSafeArea()
-            
+
             VStack(spacing: .spacingXL) {
                 Image(systemName: "checkmark.circle.fill")
                     .font(.system(size: 80))
                     .foregroundColor(.success)
                     .scaleEffect(scale)
                     .opacity(opacity)
-                
+
                 Text("Application Submitted!")
                     .font(.title2)
                     .fontWeight(.bold)
@@ -474,7 +492,7 @@ struct SuccessOverlay: View {
                 scale = 1.0
                 opacity = 1.0
             }
-            
+
             DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
                 withAnimation(.easeInExit) {
                     opacity = 0
@@ -488,15 +506,22 @@ struct SuccessOverlay: View {
 #Preview {
     NavigationStack {
         OpportunityDetailView(opportunity: Opportunity(
-            id: "1",
+            id: 1,
             title: "Social Media Manager",
-            description: "We are looking for an experienced social media manager to join our team. You will be responsible for creating engaging content, managing our social media accounts, and growing our online presence.",
-            company: "Tech Startup Inc",
-            location: "Remote",
-            type: "full-time",
-            compensation: "$50k - $70k",
-            requirements: ["3+ years experience", "Strong writing skills", "Social media expertise"],
+            description: "We are looking for an experienced social media manager to join our team.",
+            type: "influencer",
+            industry: "technology",
+            budgetRange: "$500-$2000",
+            budgetMin: 500,
+            budgetMax: 2000,
+            createdBy: 1,
+            createdByName: "Tech Startup Inc",
+            status: "active",
+            requirements: ["3+ years experience", "Strong writing skills"],
+            platforms: nil,
             deadline: "2024-12-31",
+            location: nil,
+            isRemote: true,
             createdAt: nil,
             updatedAt: nil
         ))

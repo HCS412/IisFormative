@@ -2,7 +2,7 @@
 //  ChatView.swift
 //  FormativeiOS
 //
-//  Chat View
+//  Chat View - Connected to backend API
 //
 
 import SwiftUI
@@ -13,7 +13,8 @@ struct ChatView: View {
     @State private var messageText = ""
     @FocusState private var isInputFocused: Bool
     @Environment(\.dismiss) var dismiss
-    
+    @EnvironmentObject var authViewModel: AuthViewModel
+
     var body: some View {
         VStack(spacing: 0) {
             // Messages List
@@ -21,8 +22,11 @@ struct ChatView: View {
                 ScrollView {
                     LazyVStack(spacing: .spacingM) {
                         ForEach(viewModel.currentMessages) { message in
-                            MessageBubble(message: message, isCurrentUser: message.senderId == "current-user-id")
-                                .id(message.id)
+                            MessageBubble(
+                                message: message,
+                                isCurrentUser: isFromCurrentUser(message)
+                            )
+                            .id(message.id)
                         }
                     }
                     .padding(.spacingL)
@@ -35,12 +39,12 @@ struct ChatView: View {
                     }
                 }
             }
-            
+
             // Message Input
             messageInputBar
         }
         .background(Color.adaptiveBackground())
-        .navigationTitle(conversation.participant.name)
+        .navigationTitle(conversation.displayName)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
@@ -53,19 +57,19 @@ struct ChatView: View {
             await viewModel.loadMessages(for: conversation.id)
         }
     }
-    
+
     // MARK: - Message Input Bar
     private var messageInputBar: some View {
         VStack(spacing: 0) {
             Divider()
-            
+
             HStack(spacing: .spacingM) {
                 Button(action: {}) {
                     Image(systemName: "plus.circle.fill")
                         .font(.title2)
                         .foregroundColor(.brandPrimary)
                 }
-                
+
                 TextField("Type a message...", text: $messageText, axis: .vertical)
                     .textFieldStyle(.plain)
                     .padding(.spacingM)
@@ -73,7 +77,7 @@ struct ChatView: View {
                     .cornerRadius(.radiusMedium)
                     .focused($isInputFocused)
                     .lineLimit(1...5)
-                
+
                 Button(action: sendMessage) {
                     Image(systemName: messageText.isEmpty ? "arrow.up.circle.fill" : "paperplane.fill")
                         .font(.title2)
@@ -85,21 +89,28 @@ struct ChatView: View {
             .background(Color.adaptiveBackground())
         }
     }
-    
+
+    private func isFromCurrentUser(_ message: Message) -> Bool {
+        guard let currentUserId = authViewModel.currentUser?.id else {
+            return false
+        }
+        return message.senderId == currentUserId
+    }
+
     private func sendMessage() {
         guard !messageText.isEmpty else { return }
-        
+
         let content = messageText
         messageText = ""
-        
+
         Task {
-            await viewModel.sendMessage(
+            let _ = await viewModel.sendMessage(
                 content: content,
                 conversationId: conversation.id,
                 recipientId: nil
             )
         }
-        
+
         Haptics.impact(.light)
     }
 }
@@ -108,7 +119,7 @@ struct ChatView: View {
 struct MessageBubble: View {
     let message: Message
     let isCurrentUser: Bool
-    
+
     var body: some View {
         HStack(alignment: .bottom, spacing: .spacingS) {
             if !isCurrentUser {
@@ -116,10 +127,16 @@ struct MessageBubble: View {
                 Circle()
                     .fill(LinearGradient.brand)
                     .frame(width: 32, height: 32)
+                    .overlay(
+                        Text(String((message.senderName ?? "U").prefix(1)))
+                            .font(.caption)
+                            .fontWeight(.semibold)
+                            .foregroundColor(.white)
+                    )
             } else {
                 Spacer()
             }
-            
+
             VStack(alignment: isCurrentUser ? .trailing : .leading, spacing: 4) {
                 Text(message.content)
                     .font(.body)
@@ -127,27 +144,16 @@ struct MessageBubble: View {
                     .padding(.spacingM)
                     .background(
                         isCurrentUser
-                            ? LinearGradient.brand
-                            : LinearGradient(
-                                colors: [Color.adaptiveSurface()],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
+                            ? AnyShapeStyle(LinearGradient.brand)
+                            : AnyShapeStyle(Color.adaptiveSurface())
                     )
                     .cornerRadius(.radiusMedium)
-                    .overlay(
-                        // Tail
-                        MessageTail(isCurrentUser: isCurrentUser)
-                            .fill(isCurrentUser ? AnyShapeStyle(LinearGradient.brand) : AnyShapeStyle(Color.adaptiveSurface()))
-                            .frame(width: 8, height: 8)
-                            .offset(x: isCurrentUser ? 4 : -4, y: 4)
-                    )
-                
+
                 HStack(spacing: 4) {
                     Text(formatTime(message.createdAt))
                         .font(.caption2)
                         .foregroundColor(.textSecondary)
-                    
+
                     if isCurrentUser {
                         if message.readAt != nil {
                             Image(systemName: "checkmark.circle.fill")
@@ -162,74 +168,50 @@ struct MessageBubble: View {
                 }
             }
             .frame(maxWidth: UIScreen.main.bounds.width * 0.7, alignment: isCurrentUser ? .trailing : .leading)
-            
+
             if isCurrentUser {
                 Spacer()
-            } else {
-                // Avatar for sent messages
-                Circle()
-                    .fill(LinearGradient.brand)
-                    .frame(width: 32, height: 32)
             }
         }
     }
-    
-    private func formatTime(_ timestamp: String) -> String {
-        // Format time
-        return "10:30 AM" // Simplified
-    }
-}
 
-// MARK: - Message Tail Shape
-struct MessageTail: Shape {
-    let isCurrentUser: Bool
-    
-    func path(in rect: CGRect) -> Path {
-        var path = Path()
-        
-        if isCurrentUser {
-            // Right tail
-            path.move(to: CGPoint(x: rect.maxX, y: rect.minY))
-            path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
-            path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))
-            path.addQuadCurve(
-                to: CGPoint(x: rect.minX, y: rect.minY),
-                control: CGPoint(x: rect.minX - 4, y: rect.midY)
-            )
-        } else {
-            // Left tail
-            path.move(to: CGPoint(x: rect.minX, y: rect.minY))
-            path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))
-            path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
-            path.addQuadCurve(
-                to: CGPoint(x: rect.maxX, y: rect.minY),
-                control: CGPoint(x: rect.maxX + 4, y: rect.midY)
-            )
+    private func formatTime(_ timestamp: String?) -> String {
+        guard let timestamp = timestamp else { return "" }
+
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+
+        guard let date = formatter.date(from: timestamp) else {
+            formatter.formatOptions = [.withInternetDateTime]
+            guard let date = formatter.date(from: timestamp) else {
+                return ""
+            }
+            return formatTimeOnly(from: date)
         }
-        
-        path.closeSubpath()
-        return path
+
+        return formatTimeOnly(from: date)
+    }
+
+    private func formatTimeOnly(from date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "h:mm a"
+        return formatter.string(from: date)
     }
 }
 
 #Preview {
     NavigationStack {
         ChatView(conversation: Conversation(
-            id: "1",
-            participant: User(
-                id: 1,
-                name: "John Doe",
-                email: "user@example.com",
-                userType: "creator",
-                profileData: nil,
-                avatarUrl: nil,
-                createdAt: nil,
-                updatedAt: nil
-            ),
-            lastMessage: nil,
+            id: 1,
+            participantId: 2,
+            participantName: "John Doe",
+            participantAvatar: nil,
+            lastMessageContent: "Hello!",
+            lastMessageAt: nil,
             unreadCount: 0,
-            updatedAt: ""
+            createdAt: nil,
+            updatedAt: nil
         ))
+        .environmentObject(AuthViewModel())
     }
 }
-

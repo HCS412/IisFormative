@@ -2,7 +2,7 @@
 //  ConversationsListView.swift
 //  FormativeiOS
 //
-//  Conversations List View
+//  Conversations List View - Connected to backend API
 //
 
 import SwiftUI
@@ -10,23 +10,22 @@ import SwiftUI
 struct ConversationsListView: View {
     @StateObject private var viewModel = MessagesViewModel()
     @State private var searchText = ""
-    
+
     var filteredConversations: [Conversation] {
         if searchText.isEmpty {
             return viewModel.conversations
         }
         return viewModel.conversations.filter { conversation in
-            conversation.participant.email.localizedCaseInsensitiveContains(searchText) ||
-            conversation.participant.name.localizedCaseInsensitiveContains(searchText)
+            conversation.displayName.localizedCaseInsensitiveContains(searchText)
         }
     }
-    
+
     var body: some View {
         NavigationStack {
             ZStack {
                 Color.adaptiveBackground()
                     .ignoresSafeArea()
-                
+
                 if viewModel.isLoading && viewModel.conversations.isEmpty {
                     ProgressView()
                 } else if filteredConversations.isEmpty {
@@ -34,8 +33,8 @@ struct ConversationsListView: View {
                         icon: "message",
                         title: "No Messages Yet",
                         message: "Start a conversation to connect with brands and creators.",
-                        actionTitle: "New Message",
-                        action: {}
+                        actionTitle: nil,
+                        action: nil
                     )
                 } else {
                     List {
@@ -73,63 +72,52 @@ struct ConversationsListView: View {
 // MARK: - Conversation Row
 struct ConversationRow: View {
     let conversation: Conversation
-    
+
     var body: some View {
         HStack(spacing: .spacingM) {
             // Avatar
-            AsyncImage(url: URL(string: conversation.participant.avatar ?? "")) { image in
-                image
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-            } placeholder: {
-                Circle()
-                    .fill(LinearGradient.brand)
-                    .overlay(
-                        Text(String((conversation.participant.email.prefix(1))))
-                            .font(.headline)
-                            .foregroundColor(.white)
-                    )
+            if let avatarUrl = conversation.participantAvatar, let url = URL(string: avatarUrl) {
+                AsyncImage(url: url) { image in
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                } placeholder: {
+                    avatarPlaceholder
+                }
+                .frame(width: 50, height: 50)
+                .clipShape(Circle())
+            } else {
+                avatarPlaceholder
+                    .frame(width: 50, height: 50)
+                    .clipShape(Circle())
             }
-            .frame(width: 50, height: 50)
-            .clipShape(Circle())
-            .overlay(
-                Circle()
-                    .stroke(Color.adaptiveBackground(), lineWidth: 2)
-            )
-            
+
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
-                    Text(conversation.participant.name)
+                    Text(conversation.displayName)
                         .font(.subhead)
                         .fontWeight(.semibold)
                         .foregroundColor(.adaptiveTextPrimary())
-                    
+
                     Spacer()
-                    
-                    if let lastMessage = conversation.lastMessage {
-                        Text(formatTimestamp(lastMessage.createdAt))
+
+                    if let lastMessageAt = conversation.lastMessageAt {
+                        Text(formatTimestamp(lastMessageAt))
                             .font(.caption2)
                             .foregroundColor(.textSecondary)
                     }
                 }
-                
+
                 HStack {
-                    if let lastMessage = conversation.lastMessage {
-                        Text(lastMessage.content)
-                            .font(.caption)
-                            .foregroundColor(.textSecondary)
-                            .lineLimit(1)
-                    } else {
-                        Text("No messages yet")
-                            .font(.caption)
-                            .foregroundColor(.textSecondary)
-                            .italic()
-                    }
-                    
+                    Text(conversation.lastMessagePreview)
+                        .font(.caption)
+                        .foregroundColor(.textSecondary)
+                        .lineLimit(1)
+
                     Spacer()
-                    
-                    if conversation.unreadCount > 0 {
-                        Text("\(conversation.unreadCount)")
+
+                    if let unreadCount = conversation.unreadCount, unreadCount > 0 {
+                        Text("\(unreadCount)")
                             .font(.caption2)
                             .fontWeight(.bold)
                             .foregroundColor(.white)
@@ -143,14 +131,56 @@ struct ConversationRow: View {
         }
         .padding(.vertical, .spacingS)
     }
-    
+
+    private var avatarPlaceholder: some View {
+        Circle()
+            .fill(LinearGradient.brand)
+            .overlay(
+                Text(String(conversation.displayName.prefix(1)))
+                    .font(.headline)
+                    .foregroundColor(.white)
+            )
+    }
+
     private func formatTimestamp(_ timestamp: String) -> String {
-        // Format relative time
-        return "2m ago" // Simplified
+        // Parse ISO8601 timestamp and format relative time
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+
+        guard let date = formatter.date(from: timestamp) else {
+            // Try without fractional seconds
+            formatter.formatOptions = [.withInternetDateTime]
+            guard let date = formatter.date(from: timestamp) else {
+                return ""
+            }
+            return formatRelativeTime(from: date)
+        }
+
+        return formatRelativeTime(from: date)
+    }
+
+    private func formatRelativeTime(from date: Date) -> String {
+        let interval = Date().timeIntervalSince(date)
+
+        if interval < 60 {
+            return "now"
+        } else if interval < 3600 {
+            let minutes = Int(interval / 60)
+            return "\(minutes)m"
+        } else if interval < 86400 {
+            let hours = Int(interval / 3600)
+            return "\(hours)h"
+        } else if interval < 604800 {
+            let days = Int(interval / 86400)
+            return "\(days)d"
+        } else {
+            let formatter = DateFormatter()
+            formatter.dateFormat = "MMM d"
+            return formatter.string(from: date)
+        }
     }
 }
 
 #Preview {
     ConversationsListView()
 }
-

@@ -2,60 +2,62 @@
 //  Message.swift
 //  FormativeiOS
 //
-//  Message Models
+//  Message Models - Matching PostgreSQL backend
 //
 
 import Foundation
 
 struct Conversation: Codable, Identifiable {
-    let id: String
-    let participant: User
-    let lastMessage: Message?
-    let unreadCount: Int
-    let updatedAt: String
-    
-    enum CodingKeys: String, CodingKey {
-        case id = "_id"
-        case participant
-        case lastMessage
-        case unreadCount
-        case updatedAt
+    let id: Int
+    let participantId: Int?
+    let participantName: String?
+    let participantAvatar: String?
+    let lastMessageContent: String?
+    let lastMessageAt: String?
+    let unreadCount: Int?
+    let createdAt: String?
+    let updatedAt: String?
+
+    // Display helpers
+    var displayName: String {
+        participantName ?? "Unknown User"
     }
+
+    var lastMessagePreview: String {
+        lastMessageContent ?? "No messages yet"
+    }
+}
+
+struct ConversationsResponse: Codable {
+    let success: Bool?
+    let conversations: [Conversation]
 }
 
 struct Message: Codable, Identifiable {
-    let id: String
-    let conversationId: String
-    let senderId: String
+    let id: Int
+    let conversationId: Int
+    let senderId: Int
+    let senderName: String?
     let content: String
-    let type: MessageType
+    let type: String?
     let attachments: [MessageAttachment]?
     let readAt: String?
     let deliveredAt: String?
-    let createdAt: String
-    
-    enum CodingKeys: String, CodingKey {
-        case id = "_id"
-        case conversationId
-        case senderId
-        case content
-        case type
-        case attachments
-        case readAt
-        case deliveredAt
-        case createdAt
+    let createdAt: String?
+
+    var isFromCurrentUser: Bool {
+        // This would be set based on current user ID
+        false
     }
 }
 
-enum MessageType: String, Codable {
-    case text
-    case image
-    case file
-    case system
+struct MessagesResponse: Codable {
+    let success: Bool?
+    let messages: [Message]
 }
 
-struct MessageAttachment: Codable {
-    let id: String
+struct MessageAttachment: Codable, Identifiable {
+    let id: Int
     let type: String
     let url: String
     let thumbnailUrl: String?
@@ -64,9 +66,13 @@ struct MessageAttachment: Codable {
 }
 
 struct SendMessageRequest: Codable {
-    let conversationId: String?
-    let recipientId: String?
+    let conversationId: Int?
+    let recipientId: Int?
     let content: String
     let attachments: [String]?
 }
 
+struct SendMessageResponse: Codable {
+    let success: Bool
+    let message: Message?
+}
