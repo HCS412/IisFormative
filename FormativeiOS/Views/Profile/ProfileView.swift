@@ -102,8 +102,8 @@ struct ProfileView: View {
                     .fontWeight(.bold)
                     .foregroundColor(.adaptiveTextPrimary())
                 
-                if let username = authViewModel.currentUser?.username {
-                    Text("@\(username)")
+                if let userType = authViewModel.currentUser?.userType {
+                    Text(userType.capitalized)
                         .font(.subhead)
                         .foregroundColor(.textSecondary)
                 }
@@ -113,26 +113,16 @@ struct ProfileView: View {
     
     private var displayName: String {
         guard let user = authViewModel.currentUser else { return "User" }
-        if let firstName = user.firstName, let lastName = user.lastName {
-            return "\(firstName) \(lastName)"
-        } else if let firstName = user.firstName {
-            return firstName
-        } else if let username = user.username {
-            return username
-        }
-        return user.email
+        return user.name
     }
-    
+
     private var avatarInitials: String {
         guard let user = authViewModel.currentUser else { return "U" }
-        if let firstName = user.firstName, let lastName = user.lastName {
-            return String(firstName.prefix(1)) + String(lastName.prefix(1))
-        } else if let firstName = user.firstName {
-            return String(firstName.prefix(1))
-        } else if let username = user.username {
-            return String(username.prefix(1))
+        let words = user.name.split(separator: " ")
+        if words.count >= 2 {
+            return String(words[0].prefix(1)) + String(words[1].prefix(1))
         }
-        return String(user.email.prefix(1))
+        return String(user.name.prefix(1))
     }
     
     // MARK: - Stats Row
@@ -158,9 +148,13 @@ struct ProfileView: View {
                 if let email = authViewModel.currentUser?.email {
                     InfoRow(icon: "envelope.fill", text: email)
                 }
-                
-                if let location = authViewModel.currentUser?.firstName {
-                    // Would have location in user model
+
+                if let userType = authViewModel.currentUser?.userType {
+                    InfoRow(icon: "person.fill", text: userType.capitalized)
+                }
+
+                if let bio = authViewModel.currentUser?.profileData?.bio {
+                    InfoRow(icon: "text.quote", text: bio)
                 }
             }
         }

@@ -250,7 +250,7 @@ struct MemberRow: View {
                 .frame(width: 40, height: 40)
             
             VStack(alignment: .leading, spacing: 4) {
-                Text(member.user?.username ?? member.user?.email ?? "Member")
+                Text(member.user?.name ?? member.user?.email ?? "Member")
                     .font(.subhead)
                     .fontWeight(.semibold)
                 

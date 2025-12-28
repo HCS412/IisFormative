@@ -40,7 +40,7 @@ struct ChatView: View {
             messageInputBar
         }
         .background(Color.adaptiveBackground())
-        .navigationTitle(conversation.participant.username ?? conversation.participant.email)
+        .navigationTitle(conversation.participant.name)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
@@ -217,12 +217,12 @@ struct MessageTail: Shape {
         ChatView(conversation: Conversation(
             id: "1",
             participant: User(
-                id: "1",
+                id: 1,
+                name: "John Doe",
                 email: "user@example.com",
-                username: "johndoe",
-                firstName: "John",
-                lastName: "Doe",
-                avatar: nil,
+                userType: "creator",
+                profileData: nil,
+                avatarUrl: nil,
                 createdAt: nil,
                 updatedAt: nil
             ),

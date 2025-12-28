@@ -17,7 +17,7 @@ struct ConversationsListView: View {
         }
         return viewModel.conversations.filter { conversation in
             conversation.participant.email.localizedCaseInsensitiveContains(searchText) ||
-            (conversation.participant.username?.localizedCaseInsensitiveContains(searchText) ?? false)
+            conversation.participant.name.localizedCaseInsensitiveContains(searchText)
         }
     }
     
@@ -99,7 +99,7 @@ struct ConversationRow: View {
             
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
-                    Text(conversation.participant.username ?? conversation.participant.email)
+                    Text(conversation.participant.name)
                         .font(.subhead)
                         .fontWeight(.semibold)
                         .foregroundColor(.adaptiveTextPrimary())

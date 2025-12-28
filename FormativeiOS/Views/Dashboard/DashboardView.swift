@@ -63,12 +63,8 @@ struct DashboardView: View {
                 .fontWeight(.bold)
                 .foregroundColor(.adaptiveTextPrimary())
             
-            if let firstName = authViewModel.currentUser?.firstName {
-                Text("Welcome back, \(firstName)!")
-                    .font(.headline)
-                    .foregroundColor(.textSecondary)
-            } else if let username = authViewModel.currentUser?.username {
-                Text("Welcome back, \(username)!")
+            if let user = authViewModel.currentUser {
+                Text("Welcome back, \(user.name)!")
                     .font(.headline)
                     .foregroundColor(.textSecondary)
             }

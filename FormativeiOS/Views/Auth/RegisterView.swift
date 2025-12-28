@@ -10,52 +10,59 @@ import SwiftUI
 struct RegisterView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
     @Environment(\.dismiss) var dismiss
-    
+
+    @State private var name = ""
     @State private var email = ""
     @State private var password = ""
     @State private var confirmPassword = ""
-    @State private var username = ""
-    @State private var firstName = ""
-    @State private var lastName = ""
+    @State private var selectedUserType: UserType = .creator
     @State private var passwordStrength: Double = 0
-    
+
     private var passwordsMatch: Bool {
         password == confirmPassword && !password.isEmpty
     }
-    
+
     private var isFormValid: Bool {
+        !name.isEmpty &&
         !email.isEmpty &&
         email.isValidEmail &&
         !password.isEmpty &&
         passwordsMatch &&
         password.count >= 8
     }
-    
+
     var body: some View {
         ZStack {
             LiquidBlobBackground()
                 .ignoresSafeArea()
-            
+
             ScrollView {
                 VStack(spacing: .spacing2XL) {
                     Spacer(minLength: 40)
-                    
+
                     // Header
                     VStack(spacing: .spacingM) {
                         Text("Create Account")
                             .font(.display)
                             .fontWeight(.bold)
                             .foregroundColor(.adaptiveTextPrimary())
-                        
+
                         Text("Join the Formative community")
                             .font(.callout)
                             .foregroundColor(.textSecondary)
                     }
                     .padding(.top, .spacing5XL)
-                    
+
                     // Form
                     GlassCard {
                         VStack(spacing: .spacingXL) {
+                            FormTextField(
+                                title: "Full Name",
+                                text: $name,
+                                placeholder: "Enter your name",
+                                icon: "person.fill"
+                            )
+
                             FormTextField(
                                 title: "Email",
                                 text: $email,
@@ -64,7 +71,7 @@ struct RegisterView: View {
                                 keyboardType: .emailAddress,
                                 errorMessage: email.isEmpty ? nil : (email.isValidEmail ? nil : "Please enter a valid email")
                             )
-                            
+
                             VStack(alignment: .leading, spacing: .spacingS) {
                                 FormTextField(
                                     title: "Password",
@@ -73,7 +80,7 @@ struct RegisterView: View {
                                     icon: "lock.fill",
                                     isSecure: true
                                 )
-                                
+
                                 // Password strength indicator
                                 if !password.isEmpty {
                                     VStack(alignment: .leading, spacing: 4) {
@@ -82,7 +89,7 @@ struct RegisterView: View {
                                                 RoundedRectangle(cornerRadius: 2)
                                                     .fill(Color.gray.opacity(0.2))
                                                     .frame(height: 4)
-                                                
+
                                                 RoundedRectangle(cornerRadius: 2)
                                                     .fill(
                                                         LinearGradient(
@@ -96,20 +103,20 @@ struct RegisterView: View {
                                             }
                                         }
                                         .frame(height: 4)
-                                        
+
                                         Text(passwordStrengthText)
                                             .font(.caption)
                                             .foregroundColor(passwordStrengthColor)
                                     }
                                 }
-                                
+
                                 if !password.isEmpty && password.count < 8 {
                                     Text("Password must be at least 8 characters")
                                         .font(.caption)
                                         .foregroundColor(.error)
                                 }
                             }
-                            
+
                             FormTextField(
                                 title: "Confirm Password",
                                 text: $confirmPassword,
@@ -118,54 +125,49 @@ struct RegisterView: View {
                                 isSecure: true,
                                 errorMessage: confirmPassword.isEmpty ? nil : (passwordsMatch ? nil : "Passwords do not match")
                             )
-                            
+
                             Divider()
                                 .padding(.vertical, .spacingS)
-                            
-                            Text("Profile Information (Optional)")
-                                .font(.subhead)
-                                .fontWeight(.semibold)
-                                .foregroundColor(.textSecondary)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                            
-                            FormTextField(
-                                title: "Username",
-                                text: $username,
-                                placeholder: "Choose a username",
-                                icon: "person.fill"
-                            )
-                            
-                            FormTextField(
-                                title: "First Name",
-                                text: $firstName,
-                                placeholder: "Enter your first name",
-                                icon: "person.fill"
-                            )
-                            
-                            FormTextField(
-                                title: "Last Name",
-                                text: $lastName,
-                                placeholder: "Enter your last name",
-                                icon: "person.fill"
-                            )
-                            
+
+                            // User Type Selection
+                            VStack(alignment: .leading, spacing: .spacingM) {
+                                Text("I am a...")
+                                    .font(.subhead)
+                                    .fontWeight(.semibold)
+                                    .foregroundColor(.adaptiveTextPrimary())
+
+                                HStack(spacing: .spacingM) {
+                                    ForEach(UserType.allCases, id: \.self) { userType in
+                                        UserTypeButton(
+                                            userType: userType,
+                                            isSelected: selectedUserType == userType,
+                                            action: {
+                                                withAnimation(.springSmooth) {
+                                                    selectedUserType = userType
+                                                }
+                                                Haptics.selection()
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+
                             if let errorMessage = authViewModel.errorMessage {
                                 Text(errorMessage)
                                     .font(.caption)
                                     .foregroundColor(.error)
                                     .frame(maxWidth: .infinity, alignment: .leading)
                             }
-                            
+
                             PrimaryButton(
                                 title: "Create Account",
                                 action: {
                                     Task {
                                         await authViewModel.register(
+                                            name: name,
                                             email: email,
                                             password: password,
-                                            username: username.isEmpty ? nil : username,
-                                            firstName: firstName.isEmpty ? nil : firstName,
-                                            lastName: lastName.isEmpty ? nil : lastName
+                                            userType: selectedUserType
                                         )
                                     }
                                 },
@@ -175,7 +177,7 @@ struct RegisterView: View {
                         }
                     }
                     .padding(.horizontal, .spacingL)
-                    
+
                     Spacer(minLength: 40)
                 }
             }
@@ -193,7 +195,7 @@ struct RegisterView: View {
             calculatePasswordStrength(newValue)
         }
     }
-    
+
     private var passwordStrengthText: String {
         if passwordStrength < 0.3 {
             return "Weak"
@@ -203,7 +205,7 @@ struct RegisterView: View {
             return "Strong"
         }
     }
-    
+
     private var passwordStrengthColor: Color {
         if passwordStrength < 0.3 {
             return .error
@@ -213,10 +215,10 @@ struct RegisterView: View {
             return .success
         }
     }
-    
+
     private func calculatePasswordStrength(_ password: String) {
         var strength: Double = 0
-        
+
         // Length factor
         if password.count >= 8 {
             strength += 0.2
@@ -224,7 +226,7 @@ struct RegisterView: View {
         if password.count >= 12 {
             strength += 0.1
         }
-        
+
         // Character variety
         if password.rangeOfCharacter(from: CharacterSet.lowercaseLetters) != nil {
             strength += 0.15
@@ -238,10 +240,50 @@ struct RegisterView: View {
         if password.rangeOfCharacter(from: CharacterSet(charactersIn: "!@#$%^&*()_+-=[]{}|;:,.<>?")) != nil {
             strength += 0.15
         }
-        
+
         withAnimation(.springSmooth) {
             passwordStrength = min(strength, 1.0)
         }
+    }
+}
+
+// MARK: - User Type Button
+struct UserTypeButton: View {
+    let userType: UserType
+    let isSelected: Bool
+    let action: () -> Void
+
+    private var icon: String {
+        switch userType {
+        case .creator: return "person.crop.circle"
+        case .brand: return "building.2"
+        case .agency: return "person.3"
+        }
+    }
+
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: .spacingS) {
+                Image(systemName: icon)
+                    .font(.title2)
+
+                Text(userType.displayName)
+                    .font(.caption)
+                    .fontWeight(.medium)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.spacingM)
+            .background(
+                RoundedRectangle(cornerRadius: .radiusMedium)
+                    .fill(isSelected ? Color.brandPrimary.opacity(0.15) : Color.adaptiveSurface())
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: .radiusMedium)
+                    .stroke(isSelected ? Color.brandPrimary : Color.clear, lineWidth: 2)
+            )
+            .foregroundColor(isSelected ? .brandPrimary : .textSecondary)
+        }
+        .buttonStyle(.plain)
     }
 }
 
@@ -249,4 +291,3 @@ struct RegisterView: View {
     RegisterView()
         .environmentObject(AuthViewModel())
 }
-

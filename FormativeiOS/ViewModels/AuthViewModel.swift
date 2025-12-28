@@ -2,7 +2,7 @@
 //  AuthViewModel.swift
 //  FormativeiOS
 //
-//  Created on [Date]
+//  Authentication ViewModel - connects to Railway backend
 //
 
 import Foundation
@@ -15,101 +15,160 @@ class AuthViewModel: ObservableObject {
     @Published var currentUser: User?
     @Published var isLoading = false
     @Published var errorMessage: String?
-    
+    @Published var requires2FA = false
+    @Published var pending2FAUserId: Int?
+
     private let apiClient = APIClient.shared
     private let keychainService = KeychainService.shared
-    
+
     init() {
-        // Check if user is already authenticated
         checkAuthStatus()
     }
-    
+
     func checkAuthStatus() {
         if let token = keychainService.getToken(), !token.isEmpty {
-            // Token exists, verify it's still valid by fetching profile
             Task {
                 await loadProfile()
             }
         }
     }
-    
-    func login(email: String, password: String, rememberMe: Bool = false) async {
+
+    func login(email: String, password: String) async {
         isLoading = true
         errorMessage = nil
-        
+        requires2FA = false
+
         do {
-            let loginRequest = LoginRequest(email: email, password: password, rememberMe: rememberMe)
+            let loginRequest = LoginRequest(email: email, password: password)
             let body = try JSONEncoder().encode(loginRequest)
-            
+
             let response: AuthResponse = try await apiClient.request(
                 endpoint: "/auth/login",
                 method: "POST",
                 body: body
             )
-            
-            // Save token to keychain
-            if keychainService.saveToken(response.token) {
-                currentUser = response.user
-                isAuthenticated = true
-            } else {
-                errorMessage = "Failed to save authentication token"
+
+            // Check if 2FA is required
+            if response.requires2FA == true, let userId = response.userId {
+                requires2FA = true
+                pending2FAUserId = userId
+                isLoading = false
+                return
             }
+
+            // Direct login (no 2FA)
+            if let token = response.token, let user = response.user {
+                if keychainService.saveToken(token) {
+                    currentUser = user
+                    isAuthenticated = true
+                } else {
+                    errorMessage = "Failed to save authentication token"
+                }
+            }
+        } catch let error as APIError {
+            errorMessage = "Login failed: \(error.localizedDescription)"
         } catch {
             errorMessage = "Login failed: \(error.localizedDescription)"
         }
-        
+
         isLoading = false
     }
-    
-    func register(email: String, password: String, username: String? = nil, firstName: String? = nil, lastName: String? = nil) async {
+
+    func verify2FA(code: String) async {
+        guard let userId = pending2FAUserId else {
+            errorMessage = "No pending 2FA verification"
+            return
+        }
+
         isLoading = true
         errorMessage = nil
-        
+
+        do {
+            let request = Verify2FARequest(userId: userId, code: code)
+            let body = try JSONEncoder().encode(request)
+
+            let response: AuthResponse = try await apiClient.request(
+                endpoint: "/auth/2fa/login",
+                method: "POST",
+                body: body
+            )
+
+            if let token = response.token, let user = response.user {
+                if keychainService.saveToken(token) {
+                    currentUser = user
+                    isAuthenticated = true
+                    requires2FA = false
+                    pending2FAUserId = nil
+                } else {
+                    errorMessage = "Failed to save authentication token"
+                }
+            }
+        } catch let error as APIError {
+            errorMessage = "Verification failed: \(error.localizedDescription)"
+        } catch {
+            errorMessage = "Verification failed: \(error.localizedDescription)"
+        }
+
+        isLoading = false
+    }
+
+    func cancel2FA() {
+        requires2FA = false
+        pending2FAUserId = nil
+        errorMessage = nil
+    }
+
+    func register(name: String, email: String, password: String, userType: UserType) async {
+        isLoading = true
+        errorMessage = nil
+
         do {
             let registerRequest = RegisterRequest(
+                name: name,
                 email: email,
                 password: password,
-                username: username,
-                firstName: firstName,
-                lastName: lastName
+                userType: userType.rawValue
             )
             let body = try JSONEncoder().encode(registerRequest)
-            
+
             let response: AuthResponse = try await apiClient.request(
                 endpoint: "/auth/register",
                 method: "POST",
                 body: body
             )
-            
-            // Save token to keychain
-            if keychainService.saveToken(response.token) {
-                currentUser = response.user
-                isAuthenticated = true
-            } else {
-                errorMessage = "Failed to save authentication token"
+
+            if let token = response.token, let user = response.user {
+                if keychainService.saveToken(token) {
+                    currentUser = user
+                    isAuthenticated = true
+                } else {
+                    errorMessage = "Failed to save authentication token"
+                }
             }
+        } catch let error as APIError {
+            errorMessage = "Registration failed: \(error.localizedDescription)"
         } catch {
             errorMessage = "Registration failed: \(error.localizedDescription)"
         }
-        
+
         isLoading = false
     }
-    
+
     func logout() {
         keychainService.deleteToken()
         currentUser = nil
         isAuthenticated = false
+        requires2FA = false
+        pending2FAUserId = nil
     }
-    
+
     func loadProfile() async {
         do {
             let user: User = try await apiClient.request(endpoint: "/user/profile")
             currentUser = user
             isAuthenticated = true
         } catch {
-            // Token might be invalid, logout
             logout()
         }
     }
 }
-

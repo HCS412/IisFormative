@@ -57,8 +57,11 @@ class APIClient {
         }
         
         do {
-            return try JSONDecoder().decode(T.self, from: data)
+            let decoder = JSONDecoder()
+            decoder.keyDecodingStrategy = .convertFromSnakeCase
+            return try decoder.decode(T.self, from: data)
         } catch {
+            print("Decoding error: \(error)")
             throw APIError.decodingError(error)
         }
     }
