@@ -79,3 +79,25 @@ enum UserType: String, CaseIterable, Codable {
         }
     }
 }
+
+// MARK: - Update Profile Request
+struct UpdateProfileRequest: Codable {
+    let name: String?
+    let bio: String?
+    let website: String?
+    let location: String?
+
+    init(name: String? = nil, bio: String? = nil, website: String? = nil, location: String? = nil) {
+        self.name = name
+        self.bio = bio
+        self.website = website
+        self.location = location
+    }
+}
+
+// MARK: - Update Profile Response
+struct UpdateProfileResponse: Codable {
+    let success: Bool?
+    let user: User?
+    let message: String?
+}

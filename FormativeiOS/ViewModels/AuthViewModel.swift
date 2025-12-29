@@ -171,4 +171,44 @@ class AuthViewModel: ObservableObject {
             logout()
         }
     }
+
+    func updateProfile(name: String?, bio: String?, website: String?, location: String?) async -> Bool {
+        isLoading = true
+        errorMessage = nil
+
+        do {
+            let request = UpdateProfileRequest(
+                name: name,
+                bio: bio,
+                website: website,
+                location: location
+            )
+            let body = try JSONEncoder().encode(request)
+
+            let response: UpdateProfileResponse = try await apiClient.request(
+                endpoint: "/user/profile",
+                method: "PUT",
+                body: body
+            )
+
+            // Update local user if response contains updated user
+            if let updatedUser = response.user {
+                currentUser = updatedUser
+            } else {
+                // Reload profile to get latest data
+                await loadProfile()
+            }
+
+            isLoading = false
+            return true
+        } catch let error as APIError {
+            errorMessage = "Failed to update profile: \(error.localizedDescription)"
+            isLoading = false
+            return false
+        } catch {
+            errorMessage = "Failed to update profile: \(error.localizedDescription)"
+            isLoading = false
+            return false
+        }
+    }
 }

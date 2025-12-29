@@ -41,6 +41,7 @@ struct LoginView: View {
                             .foregroundColor(.textSecondary)
                     }
                     .padding(.top, .spacing2XL)
+                    .frame(maxWidth: .infinity)
 
                     // Glass card with form
                     GlassCard {
@@ -141,7 +142,9 @@ struct LoginView: View {
                     }
                     .padding(.bottom, .spacingL)
                 }
+                .frame(maxWidth: .infinity)
             }
+            .frame(maxWidth: .infinity)
             .navigationDestination(isPresented: $showRegister) {
                 RegisterView()
             }
@@ -282,38 +285,42 @@ struct LiquidBlobBackground: View {
     @State private var animate = false
 
     var body: some View {
-        ZStack {
-            Circle()
-                .fill(
-                    RadialGradient(
-                        colors: [
-                            Color.brandPrimary.opacity(0.3),
-                            Color.brandSecondary.opacity(0.2)
-                        ],
-                        center: .topLeading,
-                        startRadius: 0,
-                        endRadius: 300
+        GeometryReader { geometry in
+            ZStack {
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            colors: [
+                                Color.brandPrimary.opacity(0.3),
+                                Color.brandSecondary.opacity(0.2)
+                            ],
+                            center: .topLeading,
+                            startRadius: 0,
+                            endRadius: 300
+                        )
                     )
-                )
-                .frame(width: 400, height: 400)
-                .offset(x: animate ? -100 : 100, y: animate ? -150 : -100)
-                .blur(radius: 60)
+                    .frame(width: 300, height: 300)
+                    .position(x: animate ? geometry.size.width * 0.2 : geometry.size.width * 0.8,
+                              y: animate ? geometry.size.height * 0.1 : geometry.size.height * 0.2)
+                    .blur(radius: 60)
 
-            Circle()
-                .fill(
-                    RadialGradient(
-                        colors: [
-                            Color.brandSecondary.opacity(0.3),
-                            Color.brandPrimary.opacity(0.2)
-                        ],
-                        center: .bottomTrailing,
-                        startRadius: 0,
-                        endRadius: 300
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            colors: [
+                                Color.brandSecondary.opacity(0.3),
+                                Color.brandPrimary.opacity(0.2)
+                            ],
+                            center: .bottomTrailing,
+                            startRadius: 0,
+                            endRadius: 300
+                        )
                     )
-                )
-                .frame(width: 500, height: 500)
-                .offset(x: animate ? 150 : -150, y: animate ? 200 : 150)
-                .blur(radius: 80)
+                    .frame(width: 350, height: 350)
+                    .position(x: animate ? geometry.size.width * 0.8 : geometry.size.width * 0.2,
+                              y: animate ? geometry.size.height * 0.7 : geometry.size.height * 0.8)
+                    .blur(radius: 80)
+            }
         }
         .onAppear {
             withAnimation(.easeInOut(duration: 8).repeatForever(autoreverses: true)) {

@@ -255,19 +255,118 @@ struct ActionRow: View {
     }
 }
 
-// MARK: - Placeholder Views
+// MARK: - Edit Profile View
 struct EditProfileView: View {
     @Environment(\.dismiss) var dismiss
-    
+    @EnvironmentObject var authViewModel: AuthViewModel
+
+    @State private var name: String = ""
+    @State private var bio: String = ""
+    @State private var website: String = ""
+    @State private var location: String = ""
+    @State private var isSaving = false
+    @State private var showSuccessAlert = false
+    @State private var errorMessage: String?
+
     var body: some View {
         NavigationStack {
-            Text("Edit Profile")
-                .navigationTitle("Edit Profile")
-                .toolbar {
-                    ToolbarItem(placement: .cancellationAction) {
-                        Button("Cancel") { dismiss() }
+            Form {
+                Section("Basic Info") {
+                    TextField("Full Name", text: $name)
+                        .textContentType(.name)
+
+                    TextField("Location", text: $location)
+                        .textContentType(.addressCity)
+                }
+
+                Section("About") {
+                    TextField("Bio", text: $bio, axis: .vertical)
+                        .lineLimit(3...6)
+                }
+
+                Section("Links") {
+                    TextField("Website", text: $website)
+                        .textContentType(.URL)
+                        .keyboardType(.URL)
+                        .autocapitalization(.none)
+                }
+
+                if let error = errorMessage {
+                    Section {
+                        Text(error)
+                            .foregroundColor(.error)
+                            .font(.caption)
                     }
                 }
+            }
+            .navigationTitle("Edit Profile")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                    .disabled(isSaving)
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        saveProfile()
+                    }
+                    .disabled(isSaving || name.isEmpty)
+                    .fontWeight(.semibold)
+                }
+            }
+            .overlay {
+                if isSaving {
+                    ProgressView()
+                        .scaleEffect(1.5)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .background(Color.black.opacity(0.2))
+                }
+            }
+            .alert("Profile Updated", isPresented: $showSuccessAlert) {
+                Button("OK") {
+                    dismiss()
+                }
+            } message: {
+                Text("Your profile has been updated successfully.")
+            }
+            .onAppear {
+                loadCurrentValues()
+            }
+        }
+    }
+
+    private func loadCurrentValues() {
+        if let user = authViewModel.currentUser {
+            name = user.name
+            bio = user.profileData?.bio ?? ""
+            website = user.profileData?.website ?? ""
+            location = user.profileData?.location ?? ""
+        }
+    }
+
+    private func saveProfile() {
+        isSaving = true
+        errorMessage = nil
+
+        Task {
+            let success = await authViewModel.updateProfile(
+                name: name.isEmpty ? nil : name,
+                bio: bio.isEmpty ? nil : bio,
+                website: website.isEmpty ? nil : website,
+                location: location.isEmpty ? nil : location
+            )
+
+            isSaving = false
+
+            if success {
+                Haptics.notification(.success)
+                showSuccessAlert = true
+            } else {
+                Haptics.notification(.error)
+                errorMessage = authViewModel.errorMessage ?? "Failed to update profile"
+            }
         }
     }
 }

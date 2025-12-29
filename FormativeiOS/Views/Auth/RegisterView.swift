@@ -62,6 +62,7 @@ struct RegisterView: View {
                             .foregroundColor(.textSecondary)
                     }
                     .padding(.top, .spacingL)
+                    .frame(maxWidth: .infinity)
 
                     // Form
                     GlassCard {
@@ -205,7 +206,9 @@ struct RegisterView: View {
                     .padding(.horizontal, .spacingL)
                     .padding(.bottom, .spacingL)
                 }
+                .frame(maxWidth: .infinity)
             }
+            .frame(maxWidth: .infinity)
         }
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
