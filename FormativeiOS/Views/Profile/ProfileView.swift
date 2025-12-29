@@ -373,7 +373,13 @@ struct EditProfileView: View {
 
 struct SettingsView: View {
     @Environment(\.dismiss) var dismiss
-    
+    @EnvironmentObject var authViewModel: AuthViewModel
+    @State private var showDeleteConfirmation = false
+    @State private var showDeleteFinalConfirmation = false
+    @State private var isDeleting = false
+    @State private var pushNotifications = true
+    @State private var emailNotifications = true
+
     var body: some View {
         NavigationStack {
             List {
@@ -382,20 +388,27 @@ struct SettingsView: View {
                     NavigationLink("Password") {}
                     NavigationLink("Two-Factor Authentication") {}
                 }
-                
+
                 Section("Notifications") {
-                    Toggle("Push Notifications", isOn: .constant(true))
-                    Toggle("Email Notifications", isOn: .constant(true))
+                    Toggle("Push Notifications", isOn: $pushNotifications)
+                    Toggle("Email Notifications", isOn: $emailNotifications)
                 }
-                
+
                 Section("Privacy") {
                     NavigationLink("Privacy Settings") {}
                     NavigationLink("Data Export") {}
                 }
-                
-                Section("About") {
-                    NavigationLink("Terms of Service") {}
-                    NavigationLink("Privacy Policy") {}
+
+                Section("Legal") {
+                    NavigationLink("Terms of Service") {
+                        TermsOfServiceView()
+                    }
+                    NavigationLink("Privacy Policy") {
+                        PrivacyPolicyView()
+                    }
+                    NavigationLink("Community Guidelines") {
+                        CommunityGuidelinesView()
+                    }
                     HStack {
                         Text("Version")
                         Spacer()
@@ -403,12 +416,66 @@ struct SettingsView: View {
                             .foregroundColor(.textSecondary)
                     }
                 }
+
+                Section {
+                    Button(action: {
+                        showDeleteConfirmation = true
+                    }) {
+                        HStack {
+                            Spacer()
+                            if isDeleting {
+                                ProgressView()
+                                    .tint(.error)
+                            } else {
+                                Text("Delete Account")
+                                    .foregroundColor(.error)
+                            }
+                            Spacer()
+                        }
+                    }
+                    .disabled(isDeleting)
+                } footer: {
+                    Text("Deleting your account will permanently remove all your data, including profile information, applications, messages, and content. This action cannot be undone.")
+                        .font(.caption)
+                        .foregroundColor(.textSecondary)
+                }
             }
             .navigationTitle("Settings")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Done") { dismiss() }
+                        .disabled(isDeleting)
                 }
+            }
+            .alert("Delete Account?", isPresented: $showDeleteConfirmation) {
+                Button("Cancel", role: .cancel) { }
+                Button("Continue", role: .destructive) {
+                    showDeleteFinalConfirmation = true
+                }
+            } message: {
+                Text("Are you sure you want to delete your account? This will permanently remove all your data.")
+            }
+            .alert("Final Confirmation", isPresented: $showDeleteFinalConfirmation) {
+                Button("Cancel", role: .cancel) { }
+                Button("Delete Forever", role: .destructive) {
+                    deleteAccount()
+                }
+            } message: {
+                Text("This action is PERMANENT and cannot be undone. All your data will be lost forever.")
+            }
+        }
+    }
+
+    private func deleteAccount() {
+        isDeleting = true
+        Task {
+            let success = await authViewModel.deleteAccount()
+            isDeleting = false
+            if success {
+                Haptics.notification(.success)
+                dismiss()
+            } else {
+                Haptics.notification(.error)
             }
         }
     }

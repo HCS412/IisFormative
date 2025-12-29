@@ -201,6 +201,10 @@ struct RegisterView: View {
                                 isLoading: authViewModel.isLoading
                             )
                             .disabled(!isFormValid)
+
+                            // Legal links
+                            LegalLinksView()
+                                .padding(.top, .spacingM)
                         }
                     }
                     .padding(.horizontal, .spacingL)

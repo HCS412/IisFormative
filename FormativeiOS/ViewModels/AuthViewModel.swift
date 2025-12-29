@@ -222,4 +222,29 @@ class AuthViewModel: ObservableObject {
             return false
         }
     }
+
+    func deleteAccount() async -> Bool {
+        isLoading = true
+        errorMessage = nil
+
+        do {
+            try await apiClient.request(
+                endpoint: "/user/account",
+                method: "DELETE"
+            )
+
+            // Clear local data and log out
+            logout()
+            isLoading = false
+            return true
+        } catch let error as APIError {
+            errorMessage = "Failed to delete account: \(error.localizedDescription)"
+            isLoading = false
+            return false
+        } catch {
+            errorMessage = "Failed to delete account: \(error.localizedDescription)"
+            isLoading = false
+            return false
+        }
+    }
 }

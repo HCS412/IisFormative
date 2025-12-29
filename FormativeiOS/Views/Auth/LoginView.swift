@@ -140,7 +140,11 @@ struct LoginView: View {
                         .fontWeight(.semibold)
                         .foregroundColor(.brandPrimary)
                     }
-                    .padding(.bottom, .spacingL)
+
+                    // Legal links
+                    LegalLinksView()
+                        .padding(.top, .spacingM)
+                        .padding(.bottom, .spacingL)
                 }
                 .frame(maxWidth: .infinity)
             }
