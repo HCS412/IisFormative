@@ -22,10 +22,17 @@ class AuthViewModel: ObservableObject {
     private let keychainService = KeychainService.shared
 
     init() {
+        // Clear any stale 2FA state on app launch
+        requires2FA = false
+        pending2FAUserId = nil
         checkAuthStatus()
     }
 
     func checkAuthStatus() {
+        // Reset 2FA state when checking auth
+        requires2FA = false
+        pending2FAUserId = nil
+
         if let token = keychainService.getToken(), !token.isEmpty {
             Task {
                 await loadProfile()
