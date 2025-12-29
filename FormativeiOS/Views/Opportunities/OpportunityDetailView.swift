@@ -325,12 +325,13 @@ struct ScrollOffsetPreferenceKey: PreferenceKey {
 struct ApplyToOpportunityView: View {
     let opportunityId: Int
     @Environment(\.dismiss) var dismiss
+    @StateObject private var viewModel = ApplicationsViewModel()
     @State private var message = ""
     @State private var proposedRate = ""
     @State private var portfolioLinks: [String] = []
     @State private var newLink = ""
-    @State private var isSubmitting = false
     @State private var showSuccess = false
+    @State private var showError = false
 
     var body: some View {
         NavigationStack {
@@ -378,7 +379,7 @@ struct ApplyToOpportunityView: View {
 
                     // Portfolio Links
                     VStack(alignment: .leading, spacing: .spacingM) {
-                        Text("Portfolio Links")
+                        Text("Portfolio Links (Optional)")
                             .font(.headline)
                             .foregroundColor(.adaptiveTextPrimary())
 
@@ -386,6 +387,7 @@ struct ApplyToOpportunityView: View {
                             HStack {
                                 Text(link)
                                     .font(.subhead)
+                                    .lineLimit(1)
                                 Spacer()
                                 Button(action: {
                                     portfolioLinks.removeAll { $0 == link }
@@ -429,12 +431,18 @@ struct ApplyToOpportunityView: View {
                     Button("Cancel") {
                         dismiss()
                     }
+                    .disabled(viewModel.isSubmitting)
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Submit") {
-                        submitApplication()
+                    if viewModel.isSubmitting {
+                        ProgressView()
+                    } else {
+                        Button("Submit") {
+                            submitApplication()
+                        }
+                        .disabled(message.isEmpty)
+                        .fontWeight(.semibold)
                     }
-                    .disabled(isSubmitting || message.isEmpty)
                 }
             }
             .overlay {
@@ -444,16 +452,30 @@ struct ApplyToOpportunityView: View {
                     }
                 }
             }
+            .alert("Application Error", isPresented: $showError) {
+                Button("OK", role: .cancel) { }
+            } message: {
+                Text(viewModel.errorMessage ?? "Failed to submit application")
+            }
         }
     }
 
     private func submitApplication() {
-        isSubmitting = true
-        // TODO: Connect to actual API
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-            isSubmitting = false
-            showSuccess = true
-            Haptics.notification(.success)
+        Task {
+            let success = await viewModel.submitApplication(
+                opportunityId: opportunityId,
+                message: message,
+                proposedRate: proposedRate.isEmpty ? nil : proposedRate,
+                portfolioLinks: portfolioLinks.isEmpty ? nil : portfolioLinks
+            )
+
+            if success {
+                Haptics.notification(.success)
+                showSuccess = true
+            } else {
+                Haptics.notification(.error)
+                showError = true
+            }
         }
     }
 }
