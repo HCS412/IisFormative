@@ -23,18 +23,16 @@ struct LoginView: View {
                 .ignoresSafeArea()
 
             ScrollView {
-                VStack(spacing: .spacing5XL) {
-                    Spacer(minLength: 60)
-
+                VStack(spacing: .spacing2XL) {
                     // Logo/Header
                     VStack(spacing: .spacingM) {
                         Image(systemName: "sparkles")
-                            .font(.system(size: 60))
+                            .font(.system(size: 50))
                             .foregroundStyle(LinearGradient.brand)
                             .symbolEffect(.bounce, value: showBiometric)
 
                         Text("Welcome to Formative")
-                            .font(.display)
+                            .font(.title)
                             .fontWeight(.bold)
                             .foregroundColor(.adaptiveTextPrimary())
 
@@ -42,7 +40,7 @@ struct LoginView: View {
                             .font(.callout)
                             .foregroundColor(.textSecondary)
                     }
-                    .padding(.top, .spacing5XL)
+                    .padding(.top, .spacing2XL)
 
                     // Glass card with form
                     GlassCard {
@@ -141,8 +139,7 @@ struct LoginView: View {
                         .fontWeight(.semibold)
                         .foregroundColor(.brandPrimary)
                     }
-
-                    Spacer(minLength: 40)
+                    .padding(.bottom, .spacingL)
                 }
             }
             .navigationDestination(isPresented: $showRegister) {

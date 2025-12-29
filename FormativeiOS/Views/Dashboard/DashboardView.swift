@@ -10,7 +10,8 @@ import SwiftUI
 struct DashboardView: View {
     @StateObject private var viewModel = DashboardViewModel()
     @EnvironmentObject var authViewModel: AuthViewModel
-    
+    @Binding var selectedTab: Int
+
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -147,30 +148,30 @@ struct DashboardView: View {
             Text("Quick Actions")
                 .font(.headline)
                 .foregroundColor(.adaptiveTextPrimary())
-            
+
             HStack(spacing: .spacingM) {
                 QuickActionButton(
                     icon: "magnifyingglass",
                     title: "Find Opportunities",
                     color: .brandPrimary
                 ) {
-                    // Navigate to opportunities
+                    selectedTab = 1 // Navigate to Opportunities tab
                 }
-                
+
                 QuickActionButton(
                     icon: "message.fill",
                     title: "Messages",
                     color: .brandSecondary
                 ) {
-                    // Navigate to messages
+                    selectedTab = 2 // Navigate to Messages tab
                 }
-                
+
                 QuickActionButton(
-                    icon: "person.2.fill",
-                    title: "Teams",
+                    icon: "person.fill",
+                    title: "Profile",
                     color: .success
                 ) {
-                    // Navigate to teams
+                    selectedTab = 3 // Navigate to Profile tab
                 }
             }
         }
@@ -334,6 +335,6 @@ struct InvitationRow: View {
 }
 
 #Preview {
-    DashboardView()
+    DashboardView(selectedTab: .constant(0))
         .environmentObject(AuthViewModel())
 }

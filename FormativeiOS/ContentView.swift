@@ -9,40 +9,48 @@ import SwiftUI
 
 struct ContentView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
-    
+
     var body: some View {
         Group {
             if authViewModel.isAuthenticated {
                 MainTabView()
             } else {
-                LoginView()
+                NavigationStack {
+                    LoginView()
+                }
             }
         }
     }
 }
 
 struct MainTabView: View {
+    @State private var selectedTab = 0
+
     var body: some View {
-        TabView {
-            DashboardView()
+        TabView(selection: $selectedTab) {
+            DashboardView(selectedTab: $selectedTab)
                 .tabItem {
                     Label("Dashboard", systemImage: "house.fill")
                 }
-            
+                .tag(0)
+
             OpportunitiesListView()
                 .tabItem {
                     Label("Opportunities", systemImage: "briefcase.fill")
                 }
-            
-            MessagesView()
+                .tag(1)
+
+            ConversationsListView()
                 .tabItem {
                     Label("Messages", systemImage: "message.fill")
                 }
-            
+                .tag(2)
+
             ProfileView()
                 .tabItem {
                     Label("Profile", systemImage: "person.fill")
                 }
+                .tag(3)
         }
     }
 }
@@ -51,4 +59,3 @@ struct MainTabView: View {
     ContentView()
         .environmentObject(AuthViewModel())
 }
-

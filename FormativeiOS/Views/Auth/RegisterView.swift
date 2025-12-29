@@ -22,13 +22,25 @@ struct RegisterView: View {
         password == confirmPassword && !password.isEmpty
     }
 
+    private var hasUppercase: Bool {
+        password.rangeOfCharacter(from: .uppercaseLetters) != nil
+    }
+
+    private var hasSpecialCharacter: Bool {
+        password.rangeOfCharacter(from: CharacterSet(charactersIn: "!@#$%^&*()_+-=[]{}|;:,.<>?")) != nil
+    }
+
+    private var passwordMeetsRequirements: Bool {
+        password.count >= 8 && hasUppercase && hasSpecialCharacter
+    }
+
     private var isFormValid: Bool {
         !name.isEmpty &&
         !email.isEmpty &&
         email.isValidEmail &&
         !password.isEmpty &&
         passwordsMatch &&
-        password.count >= 8
+        passwordMeetsRequirements
     }
 
     var body: some View {
@@ -37,13 +49,11 @@ struct RegisterView: View {
                 .ignoresSafeArea()
 
             ScrollView {
-                VStack(spacing: .spacing2XL) {
-                    Spacer(minLength: 40)
-
+                VStack(spacing: .spacingXL) {
                     // Header
                     VStack(spacing: .spacingM) {
                         Text("Create Account")
-                            .font(.display)
+                            .font(.title)
                             .fontWeight(.bold)
                             .foregroundColor(.adaptiveTextPrimary())
 
@@ -51,7 +61,7 @@ struct RegisterView: View {
                             .font(.callout)
                             .foregroundColor(.textSecondary)
                     }
-                    .padding(.top, .spacing5XL)
+                    .padding(.top, .spacingL)
 
                     // Form
                     GlassCard {
@@ -110,10 +120,26 @@ struct RegisterView: View {
                                     }
                                 }
 
-                                if !password.isEmpty && password.count < 8 {
-                                    Text("Password must be at least 8 characters")
-                                        .font(.caption)
-                                        .foregroundColor(.error)
+                                if !password.isEmpty {
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        HStack(spacing: 4) {
+                                            Image(systemName: password.count >= 8 ? "checkmark.circle.fill" : "circle")
+                                                .foregroundColor(password.count >= 8 ? .success : .textSecondary)
+                                            Text("At least 8 characters")
+                                        }
+                                        HStack(spacing: 4) {
+                                            Image(systemName: hasUppercase ? "checkmark.circle.fill" : "circle")
+                                                .foregroundColor(hasUppercase ? .success : .textSecondary)
+                                            Text("One uppercase letter")
+                                        }
+                                        HStack(spacing: 4) {
+                                            Image(systemName: hasSpecialCharacter ? "checkmark.circle.fill" : "circle")
+                                                .foregroundColor(hasSpecialCharacter ? .success : .textSecondary)
+                                            Text("One special character (!@#$%...)")
+                                        }
+                                    }
+                                    .font(.caption)
+                                    .foregroundColor(.textSecondary)
                                 }
                             }
 
@@ -177,8 +203,7 @@ struct RegisterView: View {
                         }
                     }
                     .padding(.horizontal, .spacingL)
-
-                    Spacer(minLength: 40)
+                    .padding(.bottom, .spacingL)
                 }
             }
         }
