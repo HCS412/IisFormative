@@ -95,6 +95,12 @@ struct UpdateProfileRequest: Codable {
     }
 }
 
+// MARK: - User Profile Response (for GET /user/profile)
+struct UserProfileResponse: Codable {
+    let success: Bool?
+    let user: User?
+}
+
 // MARK: - Update Profile Response
 struct UpdateProfileResponse: Codable {
     let success: Bool?

@@ -164,9 +164,13 @@ class AuthViewModel: ObservableObject {
 
     func loadProfile() async {
         do {
-            let user: User = try await apiClient.request(endpoint: "/user/profile")
-            currentUser = user
-            isAuthenticated = true
+            let response: UserProfileResponse = try await apiClient.request(endpoint: "/user/profile")
+            if let user = response.user {
+                currentUser = user
+                isAuthenticated = true
+            } else {
+                logout()
+            }
         } catch {
             logout()
         }
