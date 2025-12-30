@@ -166,18 +166,22 @@ struct ProfileView: View {
             NavigationLink(destination: MediaKitView()) {
                 ActionRow(icon: "photo.on.rectangle.angled", title: "Media Kit", color: .brandPrimary)
             }
-            
+
             NavigationLink(destination: MyApplicationsView()) {
                 ActionRow(icon: "briefcase.fill", title: "My Applications", color: .brandSecondary)
             }
-            
+
+            NavigationLink(destination: TeamsListView()) {
+                ActionRow(icon: "person.2.fill", title: "My Teams", color: .warning)
+            }
+
             NavigationLink(destination: ShopView()) {
                 ActionRow(icon: "cart.fill", title: "Creator Shop", color: .success)
             }
-            
+
             Divider()
                 .padding(.vertical, .spacingS)
-            
+
             Button(action: {
                 Haptics.impact(.medium)
                 authViewModel.logout()
@@ -398,33 +402,81 @@ struct SettingsView: View {
         NavigationStack {
             List {
                 Section("Account") {
-                    NavigationLink("Email") {}
-                    NavigationLink("Password") {}
-                    NavigationLink("Two-Factor Authentication") {}
+                    NavigationLink {
+                        EmailSettingsView()
+                    } label: {
+                        SettingsRow(icon: "envelope.fill", title: "Email", value: authViewModel.currentUser?.email ?? "")
+                    }
+
+                    NavigationLink {
+                        PasswordSettingsView()
+                    } label: {
+                        SettingsRow(icon: "lock.fill", title: "Password", value: "••••••••")
+                    }
+
+                    NavigationLink {
+                        TwoFactorSettingsView()
+                    } label: {
+                        SettingsRow(icon: "shield.fill", title: "Two-Factor Authentication", value: "Off")
+                    }
+                }
+
+                Section("Integrations") {
+                    NavigationLink {
+                        CalendlySettingsView()
+                    } label: {
+                        SettingsRow(
+                            icon: "calendar.badge.plus",
+                            title: "Calendly",
+                            value: authViewModel.currentUser?.profileData?.calendlyUrl != nil ? "Connected" : "Not Set"
+                        )
+                    }
                 }
 
                 Section("Notifications") {
-                    Toggle("Push Notifications", isOn: $pushNotifications)
-                    Toggle("Email Notifications", isOn: $emailNotifications)
+                    Toggle(isOn: $pushNotifications) {
+                        Label("Push Notifications", systemImage: "bell.fill")
+                    }
+                    Toggle(isOn: $emailNotifications) {
+                        Label("Email Notifications", systemImage: "envelope.badge.fill")
+                    }
                 }
 
                 Section("Privacy") {
-                    NavigationLink("Privacy Settings") {}
-                    NavigationLink("Data Export") {}
+                    NavigationLink {
+                        PrivacySettingsView()
+                    } label: {
+                        SettingsRow(icon: "hand.raised.fill", title: "Privacy Settings", value: "")
+                    }
+
+                    NavigationLink {
+                        DataExportView()
+                    } label: {
+                        SettingsRow(icon: "square.and.arrow.up.fill", title: "Export Data", value: "")
+                    }
                 }
 
                 Section("Legal") {
-                    NavigationLink("Terms of Service") {
+                    NavigationLink {
                         TermsOfServiceView()
+                    } label: {
+                        SettingsRow(icon: "doc.text.fill", title: "Terms of Service", value: "")
                     }
-                    NavigationLink("Privacy Policy") {
+
+                    NavigationLink {
                         PrivacyPolicyView()
+                    } label: {
+                        SettingsRow(icon: "lock.doc.fill", title: "Privacy Policy", value: "")
                     }
-                    NavigationLink("Community Guidelines") {
+
+                    NavigationLink {
                         CommunityGuidelinesView()
+                    } label: {
+                        SettingsRow(icon: "person.2.fill", title: "Community Guidelines", value: "")
                     }
+
                     HStack {
-                        Text("Version")
+                        Label("Version", systemImage: "info.circle.fill")
                         Spacer()
                         Text("1.0.0")
                             .foregroundColor(.textSecondary)
@@ -441,7 +493,7 @@ struct SettingsView: View {
                                 ProgressView()
                                     .tint(.error)
                             } else {
-                                Text("Delete Account")
+                                Label("Delete Account", systemImage: "trash.fill")
                                     .foregroundColor(.error)
                             }
                             Spacer()
@@ -449,7 +501,7 @@ struct SettingsView: View {
                     }
                     .disabled(isDeleting)
                 } footer: {
-                    Text("Deleting your account will permanently remove all your data, including profile information, applications, messages, and content. This action cannot be undone.")
+                    Text("Deleting your account will permanently remove all your data. This action cannot be undone.")
                         .font(.caption)
                         .foregroundColor(.textSecondary)
                 }
@@ -491,6 +543,776 @@ struct SettingsView: View {
             } else {
                 Haptics.notification(.error)
             }
+        }
+    }
+}
+
+// MARK: - Settings Row Helper
+struct SettingsRow: View {
+    let icon: String
+    let title: String
+    let value: String
+
+    var body: some View {
+        HStack {
+            Label(title, systemImage: icon)
+            Spacer()
+            if !value.isEmpty {
+                Text(value)
+                    .foregroundColor(.textSecondary)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+            }
+        }
+    }
+}
+
+// MARK: - Email Settings View
+struct EmailSettingsView: View {
+    @EnvironmentObject var authViewModel: AuthViewModel
+    @State private var newEmail = ""
+    @State private var password = ""
+    @State private var isLoading = false
+    @State private var showSuccess = false
+    @State private var errorMessage: String?
+
+    var body: some View {
+        Form {
+            Section {
+                HStack {
+                    Text("Current Email")
+                    Spacer()
+                    Text(authViewModel.currentUser?.email ?? "")
+                        .foregroundColor(.textSecondary)
+                }
+            }
+
+            Section {
+                TextField("New Email Address", text: $newEmail)
+                    .textContentType(.emailAddress)
+                    .keyboardType(.emailAddress)
+                    .autocapitalization(.none)
+
+                SecureField("Confirm Password", text: $password)
+                    .textContentType(.password)
+            } header: {
+                Text("Change Email")
+            } footer: {
+                Text("Enter your password to confirm the email change. A verification link will be sent to your new email.")
+            }
+
+            if let error = errorMessage {
+                Section {
+                    Text(error)
+                        .foregroundColor(.error)
+                        .font(.caption)
+                }
+            }
+
+            Section {
+                Button(action: updateEmail) {
+                    HStack {
+                        Spacer()
+                        if isLoading {
+                            ProgressView()
+                        } else {
+                            Text("Update Email")
+                                .fontWeight(.semibold)
+                        }
+                        Spacer()
+                    }
+                }
+                .disabled(newEmail.isEmpty || password.isEmpty || isLoading)
+            }
+        }
+        .navigationTitle("Email")
+        .navigationBarTitleDisplayMode(.inline)
+        .alert("Email Updated", isPresented: $showSuccess) {
+            Button("OK") { }
+        } message: {
+            Text("Please check your new email for a verification link.")
+        }
+    }
+
+    private func updateEmail() {
+        isLoading = true
+        errorMessage = nil
+        // TODO: Implement API call
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+            isLoading = false
+            showSuccess = true
+            Haptics.notification(.success)
+        }
+    }
+}
+
+// MARK: - Password Settings View
+struct PasswordSettingsView: View {
+    @State private var currentPassword = ""
+    @State private var newPassword = ""
+    @State private var confirmPassword = ""
+    @State private var isLoading = false
+    @State private var showSuccess = false
+    @State private var errorMessage: String?
+
+    var passwordsMatch: Bool {
+        !newPassword.isEmpty && newPassword == confirmPassword
+    }
+
+    var passwordStrength: PasswordStrength {
+        if newPassword.count < 8 { return .weak }
+        let hasUppercase = newPassword.contains(where: { $0.isUppercase })
+        let hasNumber = newPassword.contains(where: { $0.isNumber })
+        let hasSpecial = newPassword.contains(where: { !$0.isLetter && !$0.isNumber })
+
+        if hasUppercase && hasNumber && hasSpecial && newPassword.count >= 12 {
+            return .strong
+        } else if (hasUppercase || hasNumber) && newPassword.count >= 8 {
+            return .medium
+        }
+        return .weak
+    }
+
+    var body: some View {
+        Form {
+            Section {
+                SecureField("Current Password", text: $currentPassword)
+                    .textContentType(.password)
+            } header: {
+                Text("Verify Identity")
+            }
+
+            Section {
+                SecureField("New Password", text: $newPassword)
+                    .textContentType(.newPassword)
+
+                if !newPassword.isEmpty {
+                    HStack {
+                        Text("Strength:")
+                            .font(.caption)
+                            .foregroundColor(.textSecondary)
+
+                        Text(passwordStrength.label)
+                            .font(.caption)
+                            .fontWeight(.semibold)
+                            .foregroundColor(passwordStrength.color)
+
+                        Spacer()
+
+                        HStack(spacing: 4) {
+                            ForEach(0..<3) { index in
+                                RoundedRectangle(cornerRadius: 2)
+                                    .fill(index < passwordStrength.bars ? passwordStrength.color : Color.gray.opacity(0.3))
+                                    .frame(width: 24, height: 4)
+                            }
+                        }
+                    }
+                }
+
+                SecureField("Confirm New Password", text: $confirmPassword)
+                    .textContentType(.newPassword)
+
+                if !confirmPassword.isEmpty && !passwordsMatch {
+                    Text("Passwords don't match")
+                        .font(.caption)
+                        .foregroundColor(.error)
+                }
+            } header: {
+                Text("New Password")
+            } footer: {
+                Text("Use at least 8 characters with a mix of letters, numbers, and symbols for a strong password.")
+            }
+
+            if let error = errorMessage {
+                Section {
+                    Text(error)
+                        .foregroundColor(.error)
+                        .font(.caption)
+                }
+            }
+
+            Section {
+                Button(action: updatePassword) {
+                    HStack {
+                        Spacer()
+                        if isLoading {
+                            ProgressView()
+                        } else {
+                            Text("Update Password")
+                                .fontWeight(.semibold)
+                        }
+                        Spacer()
+                    }
+                }
+                .disabled(currentPassword.isEmpty || !passwordsMatch || isLoading)
+            }
+        }
+        .navigationTitle("Password")
+        .navigationBarTitleDisplayMode(.inline)
+        .alert("Password Updated", isPresented: $showSuccess) {
+            Button("OK") { }
+        } message: {
+            Text("Your password has been changed successfully.")
+        }
+    }
+
+    private func updatePassword() {
+        isLoading = true
+        errorMessage = nil
+        // TODO: Implement API call
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+            isLoading = false
+            showSuccess = true
+            currentPassword = ""
+            newPassword = ""
+            confirmPassword = ""
+            Haptics.notification(.success)
+        }
+    }
+}
+
+enum PasswordStrength {
+    case weak, medium, strong
+
+    var label: String {
+        switch self {
+        case .weak: return "Weak"
+        case .medium: return "Medium"
+        case .strong: return "Strong"
+        }
+    }
+
+    var color: Color {
+        switch self {
+        case .weak: return .error
+        case .medium: return .warning
+        case .strong: return .success
+        }
+    }
+
+    var bars: Int {
+        switch self {
+        case .weak: return 1
+        case .medium: return 2
+        case .strong: return 3
+        }
+    }
+}
+
+// MARK: - Two-Factor Authentication Settings View
+struct TwoFactorSettingsView: View {
+    @State private var is2FAEnabled = false
+    @State private var showSetupSheet = false
+    @State private var showDisableAlert = false
+    @State private var verificationCode = ""
+    @State private var isLoading = false
+
+    var body: some View {
+        Form {
+            Section {
+                HStack {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Two-Factor Authentication")
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+
+                        Text(is2FAEnabled ? "Enabled" : "Disabled")
+                            .font(.caption)
+                            .foregroundColor(is2FAEnabled ? .success : .textSecondary)
+                    }
+
+                    Spacer()
+
+                    Toggle("", isOn: $is2FAEnabled)
+                        .labelsHidden()
+                        .onChange(of: is2FAEnabled) { _, newValue in
+                            if newValue {
+                                showSetupSheet = true
+                            } else {
+                                showDisableAlert = true
+                            }
+                        }
+                }
+            } footer: {
+                Text("Add an extra layer of security to your account by requiring a verification code when you sign in.")
+            }
+
+            if is2FAEnabled {
+                Section("Recovery Options") {
+                    NavigationLink {
+                        RecoveryCodesView()
+                    } label: {
+                        Label("View Recovery Codes", systemImage: "key.fill")
+                    }
+
+                    Button(action: {
+                        // Regenerate codes
+                    }) {
+                        Label("Regenerate Recovery Codes", systemImage: "arrow.clockwise")
+                    }
+                }
+            }
+
+            Section {
+                VStack(alignment: .leading, spacing: .spacingM) {
+                    Label("How it works", systemImage: "questionmark.circle.fill")
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+
+                    VStack(alignment: .leading, spacing: .spacingS) {
+                        BulletPoint(text: "Download an authenticator app (Google Authenticator, Authy)")
+                        BulletPoint(text: "Scan the QR code to add your account")
+                        BulletPoint(text: "Enter the 6-digit code when signing in")
+                    }
+                }
+            }
+        }
+        .navigationTitle("Two-Factor Auth")
+        .navigationBarTitleDisplayMode(.inline)
+        .sheet(isPresented: $showSetupSheet, onDismiss: {
+            if verificationCode.isEmpty {
+                is2FAEnabled = false
+            }
+        }) {
+            TwoFactorSetupSheet(verificationCode: $verificationCode, isEnabled: $is2FAEnabled)
+        }
+        .alert("Disable 2FA?", isPresented: $showDisableAlert) {
+            Button("Cancel", role: .cancel) {
+                is2FAEnabled = true
+            }
+            Button("Disable", role: .destructive) {
+                // Disable 2FA
+            }
+        } message: {
+            Text("This will make your account less secure. Are you sure?")
+        }
+    }
+}
+
+struct BulletPoint: View {
+    let text: String
+
+    var body: some View {
+        HStack(alignment: .top, spacing: .spacingS) {
+            Circle()
+                .fill(Color.brandPrimary)
+                .frame(width: 6, height: 6)
+                .padding(.top, 6)
+
+            Text(text)
+                .font(.caption)
+                .foregroundColor(.textSecondary)
+        }
+    }
+}
+
+struct TwoFactorSetupSheet: View {
+    @Environment(\.dismiss) var dismiss
+    @Binding var verificationCode: String
+    @Binding var isEnabled: Bool
+    @State private var step = 1
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: .spacing2XL) {
+                // Progress indicator
+                HStack(spacing: .spacingS) {
+                    ForEach(1...3, id: \.self) { stepNum in
+                        Circle()
+                            .fill(stepNum <= step ? Color.brandPrimary : Color.gray.opacity(0.3))
+                            .frame(width: 8, height: 8)
+                    }
+                }
+
+                if step == 1 {
+                    setupStep1
+                } else if step == 2 {
+                    setupStep2
+                } else {
+                    setupStep3
+                }
+
+                Spacer()
+            }
+            .padding(.spacing2XL)
+            .navigationTitle("Set Up 2FA")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        verificationCode = ""
+                        dismiss()
+                    }
+                }
+            }
+        }
+    }
+
+    private var setupStep1: some View {
+        VStack(spacing: .spacingXL) {
+            Image(systemName: "apps.iphone")
+                .font(.system(size: 60))
+                .foregroundStyle(LinearGradient.brand)
+
+            Text("Download an Authenticator App")
+                .font(.title2)
+                .fontWeight(.bold)
+
+            Text("We recommend Google Authenticator or Authy. Download one from the App Store if you haven't already.")
+                .font(.body)
+                .foregroundColor(.textSecondary)
+                .multilineTextAlignment(.center)
+
+            PrimaryButton(title: "Next", action: { step = 2 })
+        }
+    }
+
+    private var setupStep2: some View {
+        VStack(spacing: .spacingXL) {
+            // Placeholder QR code
+            RoundedRectangle(cornerRadius: .radiusMedium)
+                .fill(Color.adaptiveSurface())
+                .frame(width: 200, height: 200)
+                .overlay(
+                    Image(systemName: "qrcode")
+                        .font(.system(size: 80))
+                        .foregroundColor(.textSecondary)
+                )
+
+            Text("Scan this QR Code")
+                .font(.title2)
+                .fontWeight(.bold)
+
+            Text("Open your authenticator app and scan this code to add your Formative account.")
+                .font(.body)
+                .foregroundColor(.textSecondary)
+                .multilineTextAlignment(.center)
+
+            PrimaryButton(title: "Next", action: { step = 3 })
+        }
+    }
+
+    private var setupStep3: some View {
+        VStack(spacing: .spacingXL) {
+            Image(systemName: "checkmark.shield.fill")
+                .font(.system(size: 60))
+                .foregroundStyle(LinearGradient.brand)
+
+            Text("Enter Verification Code")
+                .font(.title2)
+                .fontWeight(.bold)
+
+            Text("Enter the 6-digit code from your authenticator app to complete setup.")
+                .font(.body)
+                .foregroundColor(.textSecondary)
+                .multilineTextAlignment(.center)
+
+            TextField("000000", text: $verificationCode)
+                .font(.title)
+                .fontWeight(.bold)
+                .multilineTextAlignment(.center)
+                .keyboardType(.numberPad)
+                .frame(maxWidth: 200)
+                .padding()
+                .background(Color.adaptiveSurface())
+                .cornerRadius(.radiusMedium)
+
+            PrimaryButton(title: "Verify & Enable", action: {
+                isEnabled = true
+                Haptics.notification(.success)
+                dismiss()
+            }, isDisabled: verificationCode.count != 6)
+        }
+    }
+}
+
+struct RecoveryCodesView: View {
+    let codes = ["ABC123DEF456", "GHI789JKL012", "MNO345PQR678", "STU901VWX234", "YZA567BCD890"]
+    @State private var copiedIndex: Int?
+
+    var body: some View {
+        Form {
+            Section {
+                ForEach(Array(codes.enumerated()), id: \.offset) { index, code in
+                    HStack {
+                        Text(code)
+                            .font(.system(.body, design: .monospaced))
+
+                        Spacer()
+
+                        Button(action: {
+                            UIPasteboard.general.string = code
+                            copiedIndex = index
+                            Haptics.notification(.success)
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                                copiedIndex = nil
+                            }
+                        }) {
+                            Image(systemName: copiedIndex == index ? "checkmark" : "doc.on.doc")
+                                .foregroundColor(copiedIndex == index ? .success : .brandPrimary)
+                        }
+                    }
+                }
+            } header: {
+                Text("Recovery Codes")
+            } footer: {
+                Text("Save these codes in a secure place. You can use them to access your account if you lose your authenticator device.")
+            }
+
+            Section {
+                Button(action: {
+                    UIPasteboard.general.string = codes.joined(separator: "\n")
+                    Haptics.notification(.success)
+                }) {
+                    Label("Copy All Codes", systemImage: "doc.on.doc.fill")
+                }
+            }
+        }
+        .navigationTitle("Recovery Codes")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+// MARK: - Calendly Settings View
+struct CalendlySettingsView: View {
+    @EnvironmentObject var authViewModel: AuthViewModel
+    @State private var calendlyUrl = ""
+    @State private var isLoading = false
+    @State private var showSuccess = false
+
+    var body: some View {
+        Form {
+            Section {
+                VStack(alignment: .leading, spacing: .spacingM) {
+                    Image(systemName: "calendar.badge.plus")
+                        .font(.system(size: 40))
+                        .foregroundStyle(LinearGradient.brand)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, .spacingM)
+
+                    Text("Connect Calendly")
+                        .font(.headline)
+                        .frame(maxWidth: .infinity)
+
+                    Text("Add your Calendly link so brands and collaborators can easily schedule meetings with you.")
+                        .font(.caption)
+                        .foregroundColor(.textSecondary)
+                        .multilineTextAlignment(.center)
+                        .frame(maxWidth: .infinity)
+                }
+            }
+
+            Section {
+                TextField("https://calendly.com/your-link", text: $calendlyUrl)
+                    .textContentType(.URL)
+                    .keyboardType(.URL)
+                    .autocapitalization(.none)
+            } header: {
+                Text("Calendly URL")
+            } footer: {
+                Text("Your Calendly link will appear on your dashboard calendar section.")
+            }
+
+            Section {
+                Button(action: saveCalendlyUrl) {
+                    HStack {
+                        Spacer()
+                        if isLoading {
+                            ProgressView()
+                        } else {
+                            Text("Save")
+                                .fontWeight(.semibold)
+                        }
+                        Spacer()
+                    }
+                }
+                .disabled(isLoading)
+
+                if !calendlyUrl.isEmpty {
+                    Button(role: .destructive, action: removeCalendlyUrl) {
+                        HStack {
+                            Spacer()
+                            Text("Remove Calendly Link")
+                            Spacer()
+                        }
+                    }
+                }
+            }
+        }
+        .navigationTitle("Calendly")
+        .navigationBarTitleDisplayMode(.inline)
+        .onAppear {
+            calendlyUrl = authViewModel.currentUser?.profileData?.calendlyUrl ?? ""
+        }
+        .alert("Calendly Updated", isPresented: $showSuccess) {
+            Button("OK") { }
+        }
+    }
+
+    private func saveCalendlyUrl() {
+        isLoading = true
+        Task {
+            let success = await authViewModel.updateProfile(
+                name: nil,
+                bio: nil,
+                website: nil,
+                location: nil,
+                calendlyUrl: calendlyUrl.isEmpty ? nil : calendlyUrl
+            )
+            isLoading = false
+            if success {
+                showSuccess = true
+                Haptics.notification(.success)
+            } else {
+                Haptics.notification(.error)
+            }
+        }
+    }
+
+    private func removeCalendlyUrl() {
+        calendlyUrl = ""
+        saveCalendlyUrl()
+    }
+}
+
+// MARK: - Privacy Settings View
+struct PrivacySettingsView: View {
+    @State private var profileVisibility = "Public"
+    @State private var showActivityStatus = true
+    @State private var allowMessages = "Everyone"
+
+    var body: some View {
+        Form {
+            Section("Profile Visibility") {
+                Picker("Who can see your profile", selection: $profileVisibility) {
+                    Text("Public").tag("Public")
+                    Text("Connections Only").tag("Connections")
+                    Text("Private").tag("Private")
+                }
+            }
+
+            Section {
+                Toggle("Show Activity Status", isOn: $showActivityStatus)
+            } header: {
+                Text("Activity")
+            } footer: {
+                Text("When enabled, others can see when you were last active.")
+            }
+
+            Section("Messaging") {
+                Picker("Who can message you", selection: $allowMessages) {
+                    Text("Everyone").tag("Everyone")
+                    Text("Connections Only").tag("Connections")
+                    Text("No One").tag("None")
+                }
+            }
+
+            Section("Blocked Accounts") {
+                NavigationLink {
+                    BlockedAccountsView()
+                } label: {
+                    Text("Manage Blocked Accounts")
+                }
+            }
+        }
+        .navigationTitle("Privacy")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+struct BlockedAccountsView: View {
+    var body: some View {
+        VStack(spacing: .spacingXL) {
+            Spacer()
+
+            Image(systemName: "person.crop.circle.badge.xmark")
+                .font(.system(size: 60))
+                .foregroundColor(.textSecondary.opacity(0.5))
+
+            Text("No Blocked Accounts")
+                .font(.headline)
+
+            Text("Accounts you block will appear here")
+                .font(.subheadline)
+                .foregroundColor(.textSecondary)
+
+            Spacer()
+        }
+        .navigationTitle("Blocked Accounts")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+// MARK: - Data Export View
+struct DataExportView: View {
+    @State private var isExporting = false
+    @State private var showSuccess = false
+
+    var body: some View {
+        Form {
+            Section {
+                VStack(alignment: .leading, spacing: .spacingM) {
+                    Image(systemName: "square.and.arrow.up.fill")
+                        .font(.system(size: 40))
+                        .foregroundStyle(LinearGradient.brand)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, .spacingM)
+
+                    Text("Export Your Data")
+                        .font(.headline)
+                        .frame(maxWidth: .infinity)
+
+                    Text("Download a copy of all your Formative data including your profile, applications, messages, and activity history.")
+                        .font(.caption)
+                        .foregroundColor(.textSecondary)
+                        .multilineTextAlignment(.center)
+                        .frame(maxWidth: .infinity)
+                }
+            }
+
+            Section("What's Included") {
+                Label("Profile Information", systemImage: "person.fill")
+                Label("Applications & Proposals", systemImage: "briefcase.fill")
+                Label("Messages & Conversations", systemImage: "message.fill")
+                Label("Activity History", systemImage: "clock.fill")
+                Label("Media Kit & Portfolio", systemImage: "photo.fill")
+            }
+
+            Section {
+                Button(action: exportData) {
+                    HStack {
+                        Spacer()
+                        if isExporting {
+                            ProgressView()
+                            Text("Preparing...")
+                                .padding(.leading, .spacingS)
+                        } else {
+                            Label("Request Data Export", systemImage: "arrow.down.circle.fill")
+                        }
+                        Spacer()
+                    }
+                }
+                .disabled(isExporting)
+            } footer: {
+                Text("You'll receive an email with a download link when your data is ready. This usually takes a few minutes.")
+            }
+        }
+        .navigationTitle("Export Data")
+        .navigationBarTitleDisplayMode(.inline)
+        .alert("Export Requested", isPresented: $showSuccess) {
+            Button("OK") { }
+        } message: {
+            Text("We're preparing your data. You'll receive an email with a download link shortly.")
+        }
+    }
+
+    private func exportData() {
+        isExporting = true
+        // Simulate export
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            isExporting = false
+            showSuccess = true
+            Haptics.notification(.success)
         }
     }
 }
