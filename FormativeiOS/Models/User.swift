@@ -74,35 +74,61 @@ struct AppleSignInRequest: Codable {
     let name: String?
 }
 
-// MARK: - User Type Enum
+// MARK: - User Type Enum (matches backend: influencer, brand, freelancer)
 enum UserType: String, CaseIterable, Codable {
-    case creator = "creator"
+    case influencer = "influencer"
     case brand = "brand"
-    case agency = "agency"
+    case freelancer = "freelancer"
 
     var displayName: String {
         switch self {
-        case .creator: return "Creator"
+        case .influencer: return "Influencer"
         case .brand: return "Brand"
-        case .agency: return "Agency"
+        case .freelancer: return "Freelancer"
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .influencer: return "person.crop.circle.badge.checkmark"
+        case .brand: return "building.2.fill"
+        case .freelancer: return "hammer.fill"
         }
     }
 }
 
-// MARK: - Update Profile Request
+// MARK: - Update Profile Request (matches backend PUT /user/profile)
 struct UpdateProfileRequest: Codable {
     let name: String?
     let bio: String?
     let website: String?
     let location: String?
-    let calendlyUrl: String?
+    let avatarUrl: String?
+    let profileData: ProfileDataUpdate?
 
-    init(name: String? = nil, bio: String? = nil, website: String? = nil, location: String? = nil, calendlyUrl: String? = nil) {
+    init(name: String? = nil, bio: String? = nil, website: String? = nil, location: String? = nil, avatarUrl: String? = nil, calendlyUrl: String? = nil) {
         self.name = name
         self.bio = bio
         self.website = website
         self.location = location
+        self.avatarUrl = avatarUrl
+        // calendlyUrl goes inside profileData JSONB
+        if calendlyUrl != nil {
+            self.profileData = ProfileDataUpdate(calendlyUrl: calendlyUrl)
+        } else {
+            self.profileData = nil
+        }
+    }
+}
+
+// MARK: - Profile Data Update (for JSONB fields)
+struct ProfileDataUpdate: Codable {
+    let calendlyUrl: String?
+    let socialLinks: [String: String]?
+
+    init(calendlyUrl: String? = nil, socialLinks: [String: String]? = nil) {
         self.calendlyUrl = calendlyUrl
+        self.socialLinks = socialLinks
     }
 }
 

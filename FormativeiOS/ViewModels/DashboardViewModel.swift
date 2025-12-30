@@ -152,9 +152,13 @@ class DashboardViewModel: ObservableObject {
     // MARK: - Invitation Actions
     func acceptInvitation(_ invitation: TeamInvitation) async -> Bool {
         do {
+            // Backend uses /teams/:id/respond with { response: 'accepted' }
+            let request = TeamInvitationResponse(response: "accepted")
+            let body = try JSONEncoder().encode(request)
             let _: EmptyResponse = try await apiClient.request(
-                endpoint: "/teams/invitations/\(invitation.id)/accept",
-                method: "POST"
+                endpoint: "/teams/\(invitation.teamId)/respond",
+                method: "PUT",
+                body: body
             )
             // Remove from pending list
             pendingInvitations.removeAll { $0.id == invitation.id }
@@ -167,9 +171,13 @@ class DashboardViewModel: ObservableObject {
 
     func declineInvitation(_ invitation: TeamInvitation) async -> Bool {
         do {
+            // Backend uses /teams/:id/respond with { response: 'declined' }
+            let request = TeamInvitationResponse(response: "declined")
+            let body = try JSONEncoder().encode(request)
             let _: EmptyResponse = try await apiClient.request(
-                endpoint: "/teams/invitations/\(invitation.id)/decline",
-                method: "POST"
+                endpoint: "/teams/\(invitation.teamId)/respond",
+                method: "PUT",
+                body: body
             )
             // Remove from pending list
             pendingInvitations.removeAll { $0.id == invitation.id }
@@ -179,6 +187,11 @@ class DashboardViewModel: ObservableObject {
             return false
         }
     }
+}
+
+// MARK: - Team Invitation Response
+struct TeamInvitationResponse: Codable {
+    let response: String  // "accepted" or "declined"
 }
 
 // MARK: - Empty Response for void endpoints

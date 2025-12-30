@@ -15,7 +15,7 @@ struct RegisterView: View {
     @State private var email = ""
     @State private var password = ""
     @State private var confirmPassword = ""
-    @State private var selectedUserType: UserType = .creator
+    @State private var selectedUserType: UserType = .influencer
     @State private var passwordStrength: Double = 0
 
     private var passwordsMatch: Bool {
@@ -286,11 +286,7 @@ struct UserTypeButton: View {
     let action: () -> Void
 
     private var icon: String {
-        switch userType {
-        case .creator: return "person.crop.circle"
-        case .brand: return "building.2"
-        case .agency: return "person.3"
-        }
+        userType.icon
     }
 
     var body: some View {

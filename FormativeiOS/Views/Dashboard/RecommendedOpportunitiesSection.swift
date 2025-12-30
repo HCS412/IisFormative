@@ -162,14 +162,14 @@ struct RecommendationEngine {
         let brandTypes = ["partnership", "sponsorship", "collaboration"]
 
         switch userType {
-        case "creator":
+        case "influencer":
             if creatorTypes.contains(oppType) { return 30 }
             return 10
         case "brand":
             if brandTypes.contains(oppType) { return 30 }
             return 10
-        case "agency":
-            // Agencies can work with all types
+        case "freelancer":
+            // Freelancers can work with various types
             return 25
         default:
             return 15

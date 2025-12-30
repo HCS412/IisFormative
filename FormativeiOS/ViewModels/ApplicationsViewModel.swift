@@ -24,8 +24,9 @@ class ApplicationsViewModel: ObservableObject {
         errorMessage = nil
 
         do {
+            // Backend uses /influencer/applications for creators
             let response: ApplicationsResponse = try await apiClient.request(
-                endpoint: "/applications"
+                endpoint: "/influencer/applications"
             )
             applications = response.applications
         } catch let error as APIError {

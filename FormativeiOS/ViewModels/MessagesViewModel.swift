@@ -25,7 +25,7 @@ class MessagesViewModel: ObservableObject {
 
         do {
             let response: ConversationsResponse = try await apiClient.request(
-                endpoint: "/conversations"
+                endpoint: "/messages/conversations"
             )
             conversations = response.conversations
         } catch let error as APIError {
@@ -49,7 +49,7 @@ class MessagesViewModel: ObservableObject {
 
         do {
             let response: MessagesResponse = try await apiClient.request(
-                endpoint: "/conversations/\(conversationId)/messages"
+                endpoint: "/messages/conversation/\(conversationId)"
             )
             currentMessages = response.messages
             selectedConversationId = conversationId
