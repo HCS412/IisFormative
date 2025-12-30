@@ -9,10 +9,13 @@ import SwiftUI
 
 struct ContentView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
+    @AppStorage("hasVerifiedAge") private var hasVerifiedAge = false
 
     var body: some View {
         Group {
-            if authViewModel.isAuthenticated {
+            if !hasVerifiedAge {
+                AgeVerificationView(hasVerifiedAge: $hasVerifiedAge)
+            } else if authViewModel.isAuthenticated {
                 MainTabView()
             } else {
                 NavigationStack {
@@ -25,6 +28,8 @@ struct ContentView: View {
 
 struct MainTabView: View {
     @State private var selectedTab = 0
+    @AppStorage("hasRequestedNotifications") private var hasRequestedNotifications = false
+    @State private var showNotificationPermission = false
 
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -51,6 +56,20 @@ struct MainTabView: View {
                     Label("Profile", systemImage: "person.fill")
                 }
                 .tag(3)
+        }
+        .onAppear {
+            if !hasRequestedNotifications {
+                // Delay showing notification prompt for better UX
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                    showNotificationPermission = true
+                }
+            }
+        }
+        .fullScreenCover(isPresented: $showNotificationPermission) {
+            NotificationPermissionView(isPresented: $showNotificationPermission)
+                .onDisappear {
+                    hasRequestedNotifications = true
+                }
         }
     }
 }

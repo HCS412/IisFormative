@@ -1,0 +1,34 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Brand Gradient -->
+    <linearGradient id="brandGradient2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6366F1"/>
+      <stop offset="100%" style="stop-color:#EC4899"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1024" height="1024" rx="224" ry="224" fill="url(#brandGradient2)"/>
+
+  <!-- Abstract "F" made of connected nodes - representing Formative connections -->
+
+  <!-- Main vertical line of F -->
+  <rect x="320" y="280" width="56" height="464" rx="28" fill="white" opacity="0.95"/>
+
+  <!-- Top horizontal of F -->
+  <rect x="320" y="280" width="320" height="56" rx="28" fill="white" opacity="0.95"/>
+
+  <!-- Middle horizontal of F (shorter) -->
+  <rect x="320" y="460" width="240" height="56" rx="28" fill="white" opacity="0.95"/>
+
+  <!-- Connection nodes (dots at key points) -->
+  <circle cx="640" cy="308" r="44" fill="white" opacity="0.9"/>
+  <circle cx="560" cy="488" r="44" fill="white" opacity="0.9"/>
+
+  <!-- Connection line from F to outer node (representing reach/connection) -->
+  <line x1="640" y1="308" x2="720" y2="400" stroke="white" stroke-width="24" stroke-linecap="round" opacity="0.6"/>
+  <circle cx="720" cy="400" r="32" fill="white" opacity="0.7"/>
+
+  <line x1="560" y1="488" x2="680" y2="560" stroke="white" stroke-width="24" stroke-linecap="round" opacity="0.6"/>
+  <circle cx="680" cy="560" r="32" fill="white" opacity="0.7"/>
+</svg>

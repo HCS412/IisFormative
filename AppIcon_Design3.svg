@@ -1,0 +1,45 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Brand Gradient -->
+    <linearGradient id="brandGradient3" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6366F1"/>
+      <stop offset="100%" style="stop-color:#EC4899"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1024" height="1024" rx="224" ry="224" fill="url(#brandGradient3)"/>
+
+  <!-- Abstract handshake/connection - two curved shapes meeting -->
+
+  <!-- Left arc (Creator side) -->
+  <path d="M 280 512
+           Q 280 320, 420 320
+           Q 512 320, 512 420"
+        fill="none"
+        stroke="white"
+        stroke-width="56"
+        stroke-linecap="round"
+        opacity="0.95"/>
+
+  <!-- Right arc (Brand side) -->
+  <path d="M 744 512
+           Q 744 704, 604 704
+           Q 512 704, 512 604"
+        fill="none"
+        stroke="white"
+        stroke-width="56"
+        stroke-linecap="round"
+        opacity="0.95"/>
+
+  <!-- Connection point in center -->
+  <circle cx="512" cy="512" r="64" fill="white" opacity="0.95"/>
+
+  <!-- Pulse rings around center (representing active connection) -->
+  <circle cx="512" cy="512" r="100" fill="none" stroke="white" stroke-width="8" opacity="0.4"/>
+  <circle cx="512" cy="512" r="140" fill="none" stroke="white" stroke-width="6" opacity="0.25"/>
+
+  <!-- Endpoint dots -->
+  <circle cx="280" cy="512" r="36" fill="white" opacity="0.9"/>
+  <circle cx="744" cy="512" r="36" fill="white" opacity="0.9"/>
+</svg>

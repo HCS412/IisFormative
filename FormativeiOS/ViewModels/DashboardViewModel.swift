@@ -15,19 +15,23 @@ class DashboardViewModel: ObservableObject {
     @Published var recentActivity: [ActivityItem] = []
     @Published var pendingInvitations: [TeamInvitation] = []
     @Published var recentOpportunities: [Opportunity] = []
+    @Published var recommendedOpportunities: [RecommendedOpportunity] = []
+    @Published var upcomingDeadlines: [CalendarDeadline] = []
     @Published var isLoading = false
     @Published var errorMessage: String?
 
     private let apiClient = APIClient.shared
+    private var currentUser: User?
 
-    func loadDashboard() async {
+    func loadDashboard(user: User? = nil) async {
         isLoading = true
         errorMessage = nil
+        currentUser = user
 
-        // Load stats, activity, and opportunities in parallel
+        // Load stats, activity, opportunities, and deadlines in parallel
         async let statsTask = loadStats()
         async let activityTask = loadRecentActivity()
-        async let opportunitiesTask = loadRecentOpportunities()
+        async let opportunitiesTask = loadOpportunitiesAndRecommendations()
 
         _ = await (statsTask, activityTask, opportunitiesTask)
 
@@ -79,20 +83,104 @@ class DashboardViewModel: ObservableObject {
         }
     }
 
-    private func loadRecentOpportunities() async {
+    private func loadOpportunitiesAndRecommendations() async {
         do {
             let response: OpportunitiesResponse = try await apiClient.request(
                 endpoint: "/opportunities"
             )
-            // Show first 3 opportunities on dashboard
+
+            // Store recent opportunities
             recentOpportunities = Array(response.opportunities.prefix(3))
+
+            // Generate recommendations using scoring algorithm
+            let engine = RecommendationEngine(user: currentUser)
+            let scored = response.opportunities.map { opportunity in
+                let score = engine.score(opportunity: opportunity)
+                return RecommendedOpportunity(opportunity: opportunity, score: score)
+            }
+
+            // Sort by score and take top recommendations
+            recommendedOpportunities = scored
+                .sorted { $0.score > $1.score }
+                .prefix(6)
+                .map { $0 }
+
+            // Extract deadlines from opportunities
+            extractDeadlines(from: response.opportunities)
+
         } catch {
             recentOpportunities = []
+            recommendedOpportunities = []
+            upcomingDeadlines = []
         }
     }
 
+    private func extractDeadlines(from opportunities: [Opportunity]) {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+
+        let now = Date()
+        var deadlines: [CalendarDeadline] = []
+
+        for opportunity in opportunities {
+            guard let deadlineString = opportunity.deadline,
+                  let date = formatter.date(from: deadlineString),
+                  date > now else {
+                continue
+            }
+
+            deadlines.append(CalendarDeadline(
+                id: opportunity.id,
+                title: opportunity.title,
+                date: date,
+                type: .opportunityDeadline,
+                opportunityId: opportunity.id
+            ))
+        }
+
+        // Sort by date and take next 5
+        upcomingDeadlines = deadlines
+            .sorted { $0.date < $1.date }
+            .prefix(5)
+            .map { $0 }
+    }
+
     func refresh() async {
-        await loadDashboard()
+        await loadDashboard(user: currentUser)
+    }
+}
+
+// MARK: - Calendar Deadline Model
+struct CalendarDeadline: Identifiable {
+    let id: Int
+    let title: String
+    let date: Date
+    let type: DeadlineType
+    let opportunityId: Int?
+
+    enum DeadlineType {
+        case opportunityDeadline
+        case applicationDeadline
+        case campaignMilestone
+        case meeting
+
+        var icon: String {
+            switch self {
+            case .opportunityDeadline: return "briefcase.fill"
+            case .applicationDeadline: return "doc.fill"
+            case .campaignMilestone: return "flag.fill"
+            case .meeting: return "video.fill"
+            }
+        }
+
+        var color: Color {
+            switch self {
+            case .opportunityDeadline: return .brandPrimary
+            case .applicationDeadline: return .warning
+            case .campaignMilestone: return .success
+            case .meeting: return .brandSecondary
+            }
+        }
     }
 }
 

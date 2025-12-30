@@ -1,0 +1,35 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Brand Gradient -->
+    <linearGradient id="brandGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6366F1"/>
+      <stop offset="100%" style="stop-color:#EC4899"/>
+    </linearGradient>
+
+    <!-- Subtle inner shadow -->
+    <filter id="innerGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="20" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+
+  <!-- Background with rounded corners (iOS style) -->
+  <rect width="1024" height="1024" rx="224" ry="224" fill="url(#brandGradient)"/>
+
+  <!-- Abstract Connection Symbol - Two overlapping rounded shapes -->
+  <!-- Represents Creator (left) connecting with Brand (right) -->
+
+  <!-- Left circle (Creator) -->
+  <circle cx="380" cy="512" r="180" fill="none" stroke="white" stroke-width="48" opacity="0.95"/>
+
+  <!-- Right circle (Brand) -->
+  <circle cx="644" cy="512" r="180" fill="none" stroke="white" stroke-width="48" opacity="0.95"/>
+
+  <!-- Connection highlight in the middle (the overlap/intersection area) -->
+  <ellipse cx="512" cy="512" rx="60" ry="120" fill="white" opacity="0.3"/>
+
+  <!-- Small dot accents representing data/content flow -->
+  <circle cx="512" cy="420" r="16" fill="white" opacity="0.8"/>
+  <circle cx="512" cy="512" r="16" fill="white" opacity="0.9"/>
+  <circle cx="512" cy="604" r="16" fill="white" opacity="0.8"/>
+</svg>

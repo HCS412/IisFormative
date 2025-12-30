@@ -168,8 +168,7 @@ struct OpportunitiesListView: View {
 // MARK: - Opportunity Card
 struct OpportunityCard: View {
     let opportunity: Opportunity
-    @State private var isPressed = false
-    
+
     var body: some View {
         GlassCard {
             VStack(alignment: .leading, spacing: .spacingM) {
@@ -244,20 +243,6 @@ struct OpportunityCard: View {
                 }
             }
         }
-        .scaleEffect(isPressed ? 0.98 : 1.0)
-        .simultaneousGesture(
-            DragGesture(minimumDistance: 0)
-                .onChanged { _ in
-                    withAnimation(.springSnappy) {
-                        isPressed = true
-                    }
-                }
-                .onEnded { _ in
-                    withAnimation(.springSnappy) {
-                        isPressed = false
-                    }
-                }
-        )
     }
 }
 

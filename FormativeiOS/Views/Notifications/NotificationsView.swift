@@ -123,8 +123,7 @@ struct NotificationsView: View {
 // MARK: - Notification Row
 struct NotificationRow: View {
     let notification: AppNotification
-    @State private var isPressed = false
-    
+
     var body: some View {
         Button(action: {
             Haptics.selection()
@@ -138,22 +137,22 @@ struct NotificationRow: View {
                     .frame(width: 44, height: 44)
                     .background(notification.type.color)
                     .cornerRadius(.radiusMedium)
-                
+
                 // Content
                 VStack(alignment: .leading, spacing: 4) {
                     Text(notification.title)
                         .font(.subhead)
                         .fontWeight(.semibold)
                         .foregroundColor(.adaptiveTextPrimary())
-                    
+
                     Text(notification.message)
                         .font(.caption)
                         .foregroundColor(.textSecondary)
                         .lineLimit(2)
                 }
-                
+
                 Spacer()
-                
+
                 // Unread indicator
                 if !notification.isRead {
                     Circle()
@@ -164,16 +163,15 @@ struct NotificationRow: View {
             .padding(.spacingM)
             .background(notification.isRead ? Color.adaptiveSurface() : Color.brandPrimary.opacity(0.05))
             .cornerRadius(.radiusMedium)
-            .scaleEffect(isPressed ? 0.98 : 1.0)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(ScaleButtonStyle(scale: 0.98))
         .swipeActions(edge: .trailing, allowsFullSwipe: true) {
             Button(role: .destructive, action: {
                 // Delete notification
             }) {
                 Label("Delete", systemImage: "trash")
             }
-            
+
             if !notification.isRead {
                 Button(action: {
                     // Mark as read
@@ -183,19 +181,6 @@ struct NotificationRow: View {
                 .tint(.brandPrimary)
             }
         }
-        .simultaneousGesture(
-            DragGesture(minimumDistance: 0)
-                .onChanged { _ in
-                    withAnimation(.springSnappy) {
-                        isPressed = true
-                    }
-                }
-                .onEnded { _ in
-                    withAnimation(.springSnappy) {
-                        isPressed = false
-                    }
-                }
-        )
     }
 }
 

@@ -7,6 +7,7 @@
 
 import SwiftUI
 import LocalAuthentication
+import AuthenticationServices
 
 struct LoginView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
@@ -15,6 +16,8 @@ struct LoginView: View {
     @State private var rememberMe = false
     @State private var showRegister = false
     @State private var showBiometric = false
+    @State private var isAppleSignInLoading = false
+    @Environment(\.colorScheme) var colorScheme
 
     var body: some View {
         ZStack {
@@ -100,29 +103,32 @@ struct LoginView: View {
                                 .padding(.top, .spacingS)
                             }
 
+                            // NOTE: Sign in with Apple requires a paid Apple Developer Program membership
+                            // Uncomment the code below once enrolled in the program and entitlements are configured
+                            /*
                             Divider()
                                 .padding(.vertical, .spacingM)
 
-                            // Social login (placeholder)
+                            // Sign in with Apple
                             VStack(spacing: .spacingM) {
-                                Button(action: {}) {
-                                    HStack {
-                                        Image(systemName: "apple.logo")
-                                        Text("Continue with Apple")
-                                    }
-                                    .font(.subhead)
-                                    .fontWeight(.medium)
-                                    .foregroundColor(.adaptiveTextPrimary())
-                                    .frame(maxWidth: .infinity)
-                                    .frame(height: 50)
-                                    .background(Color.adaptiveSurface())
-                                    .cornerRadius(.radiusSmall)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: .radiusSmall)
-                                            .stroke(Color.separator, lineWidth: 1)
+                                if isAppleSignInLoading {
+                                    ProgressView()
+                                        .frame(height: 50)
+                                } else {
+                                    SignInWithAppleButton(
+                                        onRequest: { request in
+                                            request.requestedScopes = [.fullName, .email]
+                                        },
+                                        onCompletion: { result in
+                                            handleAppleSignIn(result: result)
+                                        }
                                     )
+                                    .signInWithAppleButtonStyle(colorScheme == .dark ? .white : .black)
+                                    .frame(height: 50)
+                                    .cornerRadius(.radiusSmall)
                                 }
                             }
+                            */
                         }
                     }
                     .padding(.horizontal, .spacingL)
@@ -188,6 +194,53 @@ struct LoginView: View {
                         await authViewModel.loadProfile()
                     }
                 }
+            }
+        }
+    }
+
+    private func handleAppleSignIn(result: Result<ASAuthorization, Error>) {
+        switch result {
+        case .success(let authorization):
+            guard let appleIDCredential = authorization.credential as? ASAuthorizationAppleIDCredential else {
+                return
+            }
+
+            // Get user info
+            let userIdentifier = appleIDCredential.user
+            let email = appleIDCredential.email
+            let fullName = appleIDCredential.fullName
+
+            // Get identity token
+            guard let identityTokenData = appleIDCredential.identityToken,
+                  let identityToken = String(data: identityTokenData, encoding: .utf8) else {
+                authViewModel.errorMessage = "Failed to get Apple ID token"
+                return
+            }
+
+            // Build name from components
+            var name: String? = nil
+            if let givenName = fullName?.givenName, let familyName = fullName?.familyName {
+                name = "\(givenName) \(familyName)"
+            } else if let givenName = fullName?.givenName {
+                name = givenName
+            }
+
+            isAppleSignInLoading = true
+
+            Task {
+                await authViewModel.signInWithApple(
+                    identityToken: identityToken,
+                    userIdentifier: userIdentifier,
+                    email: email,
+                    name: name
+                )
+                isAppleSignInLoading = false
+            }
+
+        case .failure(let error):
+            // User cancelled or other error
+            if (error as NSError).code != ASAuthorizationError.canceled.rawValue {
+                authViewModel.errorMessage = "Apple Sign In failed: \(error.localizedDescription)"
             }
         }
     }

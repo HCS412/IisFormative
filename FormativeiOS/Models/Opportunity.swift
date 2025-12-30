@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct Opportunity: Codable, Identifiable {
+struct Opportunity: Codable, Identifiable, Hashable {
     let id: Int
     let title: String
     let description: String
@@ -40,6 +40,15 @@ struct Opportunity: Codable, Identifiable {
 
     var companyName: String {
         createdByName ?? "Anonymous"
+    }
+
+    // Hashable conformance (based on unique id)
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
+
+    static func == (lhs: Opportunity, rhs: Opportunity) -> Bool {
+        lhs.id == rhs.id
     }
 }
 

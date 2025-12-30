@@ -35,6 +35,7 @@ struct ProfileData: Codable {
     let website: String?
     let location: String?
     let socialLinks: [String: String]?
+    let calendlyUrl: String?
 }
 
 // MARK: - Auth Response (matches backend format)
@@ -65,6 +66,14 @@ struct RegisterRequest: Codable {
     let userType: String
 }
 
+// MARK: - Apple Sign In Request
+struct AppleSignInRequest: Codable {
+    let identityToken: String
+    let userIdentifier: String
+    let email: String?
+    let name: String?
+}
+
 // MARK: - User Type Enum
 enum UserType: String, CaseIterable, Codable {
     case creator = "creator"
@@ -86,12 +95,14 @@ struct UpdateProfileRequest: Codable {
     let bio: String?
     let website: String?
     let location: String?
+    let calendlyUrl: String?
 
-    init(name: String? = nil, bio: String? = nil, website: String? = nil, location: String? = nil) {
+    init(name: String? = nil, bio: String? = nil, website: String? = nil, location: String? = nil, calendlyUrl: String? = nil) {
         self.name = name
         self.bio = bio
         self.website = website
         self.location = location
+        self.calendlyUrl = calendlyUrl
     }
 }
 

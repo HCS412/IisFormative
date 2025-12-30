@@ -247,4 +247,42 @@ class AuthViewModel: ObservableObject {
             return false
         }
     }
+
+    func signInWithApple(identityToken: String, userIdentifier: String, email: String?, name: String?) async {
+        isLoading = true
+        errorMessage = nil
+
+        do {
+            let request = AppleSignInRequest(
+                identityToken: identityToken,
+                userIdentifier: userIdentifier,
+                email: email,
+                name: name
+            )
+            let body = try JSONEncoder().encode(request)
+
+            let response: AuthResponse = try await apiClient.request(
+                endpoint: "/auth/apple",
+                method: "POST",
+                body: body
+            )
+
+            if let token = response.token, let user = response.user {
+                if keychainService.saveToken(token) {
+                    currentUser = user
+                    isAuthenticated = true
+                } else {
+                    errorMessage = "Failed to save authentication token"
+                }
+            } else {
+                errorMessage = "Invalid response from server"
+            }
+        } catch let error as APIError {
+            errorMessage = "Apple Sign In failed: \(error.localizedDescription)"
+        } catch {
+            errorMessage = "Apple Sign In failed: \(error.localizedDescription)"
+        }
+
+        isLoading = false
+    }
 }

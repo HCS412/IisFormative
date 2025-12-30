@@ -13,13 +13,10 @@ struct PrimaryButton: View {
     var icon: String? = nil
     var isLoading: Bool = false
     var isDisabled: Bool = false
-    
-    @State private var isPressed = false
-    
+
     var body: some View {
         Button(action: {
-            let impact = UIImpactFeedbackGenerator(style: .medium)
-            impact.impactOccurred()
+            Haptics.impact(.medium)
             action()
         }) {
             HStack(spacing: .spacingS) {
@@ -29,7 +26,7 @@ struct PrimaryButton: View {
                 } else if let icon = icon {
                     Image(systemName: icon)
                 }
-                
+
                 Text(title)
                     .fontWeight(.semibold)
             }
@@ -40,23 +37,21 @@ struct PrimaryButton: View {
             )
             .foregroundColor(.white)
             .cornerRadius(.radiusSmall)
-            .scaleEffect(isPressed ? 0.96 : 1.0)
         }
+        .buttonStyle(ScaleButtonStyle())
         .disabled(isLoading || isDisabled)
         .opacity(isDisabled ? 0.6 : 1.0)
-        .simultaneousGesture(
-            DragGesture(minimumDistance: 0)
-                .onChanged { _ in
-                    withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
-                        isPressed = true
-                    }
-                }
-                .onEnded { _ in
-                    withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
-                        isPressed = false
-                    }
-                }
-        )
+    }
+}
+
+// MARK: - Scale Button Style (doesn't block scroll)
+struct ScaleButtonStyle: ButtonStyle {
+    var scale: CGFloat = 0.96
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? scale : 1.0)
+            .animation(.spring(response: 0.3, dampingFraction: 0.6), value: configuration.isPressed)
     }
 }
 
@@ -69,4 +64,3 @@ struct PrimaryButton: View {
     }
     .padding()
 }
-

@@ -11,6 +11,7 @@ struct DashboardView: View {
     @StateObject private var viewModel = DashboardViewModel()
     @EnvironmentObject var authViewModel: AuthViewModel
     @Binding var selectedTab: Int
+    @State private var selectedOpportunity: Opportunity?
 
     var body: some View {
         NavigationStack {
@@ -20,23 +21,47 @@ struct DashboardView: View {
                     greetingSection
                         .padding(.horizontal, .spacingL)
                         .padding(.top, .spacingL)
-                    
+
                     // Stats Cards
                     if let stats = viewModel.stats {
                         statsSection(stats: stats)
-                            .padding(.horizontal, .spacingL)
                     }
-                    
+
+                    // Recommended Opportunities Carousel
+                    RecommendedOpportunitiesSection(
+                        opportunities: viewModel.recommendedOpportunities,
+                        onSeeAll: {
+                            selectedTab = 1 // Navigate to Opportunities tab
+                        },
+                        onSelect: { opportunity in
+                            selectedOpportunity = opportunity
+                        }
+                    )
+
+                    // Calendar Section
+                    CalendarSection(
+                        deadlines: viewModel.upcomingDeadlines,
+                        calendlyUrl: authViewModel.currentUser?.profileData?.calendlyUrl,
+                        onDeadlineTap: { deadline in
+                            if let oppId = deadline.opportunityId {
+                                // Navigate to opportunity
+                                if let opp = viewModel.recentOpportunities.first(where: { $0.id == oppId }) {
+                                    selectedOpportunity = opp
+                                }
+                            }
+                        }
+                    )
+
                     // Quick Actions
                     quickActionsSection
                         .padding(.horizontal, .spacingL)
-                    
+
                     // Recent Activity
                     if !viewModel.recentActivity.isEmpty {
                         activitySection
                             .padding(.horizontal, .spacingL)
                     }
-                    
+
                     // Pending Invitations
                     if !viewModel.pendingInvitations.isEmpty {
                         invitationsSection
@@ -47,11 +72,14 @@ struct DashboardView: View {
             }
             .background(Color.adaptiveBackground())
             .navigationTitle("Dashboard")
+            .navigationDestination(item: $selectedOpportunity) { opportunity in
+                OpportunityDetailView(opportunity: opportunity)
+            }
             .refreshable {
                 await viewModel.refresh()
             }
             .task {
-                await viewModel.loadDashboard()
+                await viewModel.loadDashboard(user: authViewModel.currentUser)
             }
         }
     }
@@ -223,9 +251,7 @@ struct QuickActionButton: View {
     let title: String
     let color: Color
     let action: () -> Void
-    
-    @State private var isPressed = false
-    
+
     var body: some View {
         Button(action: {
             Haptics.impact(.light)
@@ -238,7 +264,7 @@ struct QuickActionButton: View {
                     .frame(width: 50, height: 50)
                     .background(color.opacity(0.1))
                     .cornerRadius(.radiusMedium)
-                
+
                 Text(title)
                     .font(.caption)
                     .foregroundColor(.adaptiveTextPrimary())
@@ -248,22 +274,8 @@ struct QuickActionButton: View {
             .padding(.spacingM)
             .background(Color.adaptiveSurface())
             .cornerRadius(.radiusMedium)
-            .scaleEffect(isPressed ? 0.95 : 1.0)
         }
-        .buttonStyle(.plain)
-        .simultaneousGesture(
-            DragGesture(minimumDistance: 0)
-                .onChanged { _ in
-                    withAnimation(.springSnappy) {
-                        isPressed = true
-                    }
-                }
-                .onEnded { _ in
-                    withAnimation(.springSnappy) {
-                        isPressed = false
-                    }
-                }
-        )
+        .buttonStyle(ScaleButtonStyle(scale: 0.95))
     }
 }
 
