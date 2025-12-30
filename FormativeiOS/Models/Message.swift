@@ -35,8 +35,8 @@ struct ConversationsResponse: Codable {
 
 struct Message: Codable, Identifiable {
     let id: Int
-    let conversationId: Int
-    let senderId: Int
+    let conversationId: Int?  // Optional - not always returned by backend
+    let senderId: Int?
     let senderName: String?
     let content: String
     let type: String?

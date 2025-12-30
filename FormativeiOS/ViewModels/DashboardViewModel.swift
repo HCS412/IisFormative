@@ -12,7 +12,11 @@ import Combine
 @MainActor
 class DashboardViewModel: ObservableObject {
     @Published var stats: DashboardStats?
+    @Published var socialStats: AggregatedSocialStats = AggregatedSocialStats()
+    @Published var socialAccounts: [SocialAccount] = []
     @Published var recentActivity: [ActivityItem] = []
+    @Published var notifications: [BackendNotification] = []
+    @Published var unreadCount: Int = 0
     @Published var pendingInvitations: [TeamInvitation] = []
     @Published var recentOpportunities: [Opportunity] = []
     @Published var recommendedOpportunities: [RecommendedOpportunity] = []
@@ -28,18 +32,70 @@ class DashboardViewModel: ObservableObject {
         errorMessage = nil
         currentUser = user
 
-        // Load stats, activity, opportunities, and deadlines in parallel
+        // Load social accounts, notifications, stats, and opportunities in parallel
+        async let socialTask = loadSocialAccounts()
+        async let notificationsTask = loadNotifications()
         async let statsTask = loadStats()
-        async let activityTask = loadRecentActivity()
         async let opportunitiesTask = loadOpportunitiesAndRecommendations()
 
-        _ = await (statsTask, activityTask, opportunitiesTask)
+        _ = await (socialTask, notificationsTask, statsTask, opportunitiesTask)
 
         isLoading = false
     }
 
+    // MARK: - Load Social Accounts (Real Stats)
+    private func loadSocialAccounts() async {
+        do {
+            let response: SocialAccountsResponse = try await apiClient.request(
+                endpoint: "/user/social-accounts"
+            )
+            socialAccounts = response.accounts
+            calculateAggregatedSocialStats()
+        } catch {
+            // No social accounts connected - leave empty
+            socialAccounts = []
+            socialStats = AggregatedSocialStats()
+        }
+    }
+
+    private func calculateAggregatedSocialStats() {
+        var aggregated = AggregatedSocialStats()
+
+        for account in socialAccounts {
+            if let accountStats = account.stats {
+                aggregated.totalFollowers += accountStats.totalFollowers
+                if let engagement = accountStats.engagementRate {
+                    aggregated.totalEngagementRate += engagement
+                }
+            }
+            aggregated.platformCount += 1
+        }
+
+        aggregated.accounts = socialAccounts
+        socialStats = aggregated
+    }
+
+    // MARK: - Load Stats (Brand stats or user stats)
     private func loadStats() async {
-        // Try to fetch user stats from the API
+        // For brands, try brand-specific stats endpoint
+        if currentUser?.userType == "brand" {
+            do {
+                let response: BrandStatsResponse = try await apiClient.request(
+                    endpoint: "/brand/stats"
+                )
+                stats = DashboardStats(
+                    applications: response.totalApplications ?? 0,
+                    earnings: 0.0,
+                    profileViews: response.profileViews ?? 0,
+                    campaigns: response.activeOpportunities ?? 0
+                )
+                return
+            } catch {
+                // Fall through to generic stats
+            }
+        }
+
+        // For influencers/freelancers, try user stats
         do {
             let response: DashboardStatsResponse = try await apiClient.request(
                 endpoint: "/user/stats"
@@ -51,35 +107,67 @@ class DashboardViewModel: ObservableObject {
                 campaigns: response.campaigns ?? 0
             )
         } catch {
-            // If endpoint doesn't exist, show placeholder stats
-            // These would normally come from a real API
-            stats = DashboardStats(
-                applications: 0,
-                earnings: 0.0,
-                profileViews: 0,
-                campaigns: 0
-            )
+            // No stats available - stats will be nil
+            stats = nil
         }
     }
 
-    private func loadRecentActivity() async {
+    // MARK: - Load Notifications (Activity Feed)
+    private func loadNotifications() async {
         do {
-            let response: ActivityResponse = try await apiClient.request(
-                endpoint: "/user/activity"
+            let response: NotificationsResponse = try await apiClient.request(
+                endpoint: "/notifications"
             )
-            recentActivity = response.activities.map { item in
+            notifications = response.notifications
+            unreadCount = response.unreadCount ?? 0
+
+            // Convert to activity items for the UI
+            recentActivity = response.notifications.prefix(10).map { notification in
                 ActivityItem(
-                    id: String(item.id),
-                    type: ActivityType.from(string: item.type),
-                    title: item.title,
-                    message: item.message,
-                    timestamp: ISO8601DateFormatter().date(from: item.createdAt ?? "") ?? Date(),
-                    relatedId: item.relatedId != nil ? String(item.relatedId!) : nil
+                    id: String(notification.id),
+                    type: ActivityType.from(string: notification.type),
+                    title: notification.title,
+                    message: notification.message,
+                    timestamp: ISO8601DateFormatter().date(from: notification.createdAt ?? "") ?? Date(),
+                    relatedId: notification.relatedId != nil ? String(notification.relatedId!) : nil
                 )
             }
         } catch {
-            // If no activity endpoint, show empty state
+            // No notifications - leave empty
+            notifications = []
             recentActivity = []
+            unreadCount = 0
+        }
+    }
+
+    // MARK: - Mark Notification as Read
+    func markNotificationRead(_ notificationId: Int) async {
+        do {
+            try await apiClient.request(
+                endpoint: "/notifications/\(notificationId)/read",
+                method: "PUT"
+            )
+            // Update local state
+            if let index = notifications.firstIndex(where: { $0.id == notificationId }) {
+                // Notifications array is immutable, so reload
+                await loadNotifications()
+            }
+        } catch {
+            // Silent fail - not critical
+        }
+    }
+
+    // MARK: - Mark All Notifications as Read
+    func markAllNotificationsRead() async {
+        do {
+            let _: MarkAllReadResponse = try await apiClient.request(
+                endpoint: "/notifications/read-all",
+                method: "PUT"
+            )
+            // Reload notifications
+            await loadNotifications()
+        } catch {
+            // Silent fail - not critical
         }
     }
 
@@ -241,6 +329,15 @@ struct DashboardStatsResponse: Codable {
     let earnings: Double?
     let profileViews: Int?
     let campaigns: Int?
+}
+
+// Brand-specific stats response
+struct BrandStatsResponse: Codable {
+    let success: Bool?
+    let activeOpportunities: Int?
+    let totalApplications: Int?
+    let profileViews: Int?
+    let totalHires: Int?
 }
 
 struct ActivityResponse: Codable {

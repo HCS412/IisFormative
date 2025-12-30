@@ -1319,9 +1319,9 @@ struct DataExportView: View {
 
 struct MediaKitView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
+    @StateObject private var socialViewModel = SocialAccountsViewModel()
     @State private var showAddSocial = false
     @State private var showAddPortfolio = false
-    @State private var socialAccounts: [SocialAccount] = []
     @State private var portfolioItems: [PortfolioItem] = []
     @State private var collaborationRate = ""
     @State private var isEditing = false
@@ -1362,10 +1362,13 @@ struct MediaKitView: View {
             }
         }
         .sheet(isPresented: $showAddSocial) {
-            AddSocialAccountView(socialAccounts: $socialAccounts)
+            SocialAccountsView()
         }
         .sheet(isPresented: $showAddPortfolio) {
             AddPortfolioItemView(portfolioItems: $portfolioItems)
+        }
+        .task {
+            await socialViewModel.loadAccounts()
         }
     }
 
@@ -1459,19 +1462,11 @@ struct MediaKitView: View {
     }
 
     private var totalFollowers: String {
-        let total = socialAccounts.reduce(0) { $0 + $1.followers }
-        if total >= 1000000 {
-            return String(format: "%.1fM", Double(total) / 1000000)
-        } else if total >= 1000 {
-            return String(format: "%.1fK", Double(total) / 1000)
-        }
-        return "\(total)"
+        socialViewModel.aggregatedStats.formattedFollowers
     }
 
     private var averageEngagement: String {
-        guard !socialAccounts.isEmpty else { return "0%" }
-        let avg = socialAccounts.reduce(0.0) { $0 + $1.engagementRate } / Double(socialAccounts.count)
-        return String(format: "%.1f%%", avg)
+        socialViewModel.aggregatedStats.formattedEngagement
     }
 
     // MARK: - Social Stats Section
@@ -1494,17 +1489,15 @@ struct MediaKitView: View {
                 }
             }
 
-            if socialAccounts.isEmpty {
+            if socialViewModel.accounts.isEmpty {
                 emptyStateCard(
                     icon: "person.2.circle",
                     title: "No Social Accounts",
-                    message: "Add your social media accounts to showcase your reach"
+                    message: "Connect your social media accounts to showcase your reach"
                 )
             } else {
-                ForEach(socialAccounts) { account in
-                    SocialAccountCard(account: account, onDelete: {
-                        socialAccounts.removeAll { $0.id == account.id }
-                    })
+                ForEach(socialViewModel.accounts, id: \.id) { account in
+                    MediaKitSocialAccountCard(account: account)
                 }
             }
         }
@@ -1620,65 +1613,33 @@ struct MediaKitView: View {
     }
 }
 
-// MARK: - Social Account Model & Card
-struct SocialAccount: Identifiable {
-    let id = UUID()
-    let platform: SocialPlatform
-    let username: String
-    let followers: Int
-    let engagementRate: Double
-}
-
-enum SocialPlatform: String, CaseIterable {
-    case instagram = "Instagram"
-    case tiktok = "TikTok"
-    case youtube = "YouTube"
-    case twitter = "Twitter/X"
-    case linkedin = "LinkedIn"
-    case facebook = "Facebook"
-
-    var icon: String {
-        switch self {
-        case .instagram: return "camera.circle.fill"
-        case .tiktok: return "music.note"
-        case .youtube: return "play.rectangle.fill"
-        case .twitter: return "at.circle.fill"
-        case .linkedin: return "link.circle.fill"
-        case .facebook: return "person.2.circle.fill"
-        }
-    }
-
-    var color: Color {
-        switch self {
-        case .instagram: return .pink
-        case .tiktok: return .primary
-        case .youtube: return .red
-        case .twitter: return .blue
-        case .linkedin: return .blue
-        case .facebook: return .blue
-        }
-    }
-}
-
-struct SocialAccountCard: View {
+// MARK: - Media Kit Social Account Card (uses backend-connected SocialAccount model)
+struct MediaKitSocialAccountCard: View {
     let account: SocialAccount
-    let onDelete: () -> Void
 
     var body: some View {
         GlassCard {
             HStack(spacing: .spacingM) {
-                Image(systemName: account.platform.icon)
+                Image(systemName: account.platformType.icon)
                     .font(.title2)
-                    .foregroundColor(account.platform.color)
+                    .foregroundColor(Color(hex: account.platformType.brandColor))
                     .frame(width: 40)
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(account.platform.rawValue)
-                        .font(.subhead)
-                        .fontWeight(.medium)
-                        .foregroundColor(.adaptiveTextPrimary())
+                    HStack {
+                        Text(account.platformType.displayName)
+                            .font(.subhead)
+                            .fontWeight(.medium)
+                            .foregroundColor(.adaptiveTextPrimary())
 
-                    Text("@\(account.username)")
+                        if account.isVerified == true {
+                            Image(systemName: "checkmark.seal.fill")
+                                .font(.caption2)
+                                .foregroundColor(.success)
+                        }
+                    }
+
+                    Text(account.displayUsername)
                         .font(.caption)
                         .foregroundColor(.textSecondary)
                 }
@@ -1686,95 +1647,17 @@ struct SocialAccountCard: View {
                 Spacer()
 
                 VStack(alignment: .trailing, spacing: 2) {
-                    Text(formatFollowers(account.followers))
+                    Text(account.formattedFollowers)
                         .font(.subhead)
                         .fontWeight(.semibold)
                         .foregroundColor(.adaptiveTextPrimary())
 
-                    Text(String(format: "%.1f%% eng.", account.engagementRate))
+                    Text(account.formattedEngagement + " eng.")
                         .font(.caption)
                         .foregroundColor(.success)
                 }
-
-                Button(action: onDelete) {
-                    Image(systemName: "trash")
-                        .font(.caption)
-                        .foregroundColor(.error)
-                }
             }
         }
-    }
-
-    private func formatFollowers(_ count: Int) -> String {
-        if count >= 1000000 {
-            return String(format: "%.1fM", Double(count) / 1000000)
-        } else if count >= 1000 {
-            return String(format: "%.1fK", Double(count) / 1000)
-        }
-        return "\(count)"
-    }
-}
-
-// MARK: - Add Social Account View
-struct AddSocialAccountView: View {
-    @Binding var socialAccounts: [SocialAccount]
-    @Environment(\.dismiss) var dismiss
-
-    @State private var selectedPlatform: SocialPlatform = .instagram
-    @State private var username = ""
-    @State private var followers = ""
-    @State private var engagementRate = ""
-
-    var body: some View {
-        NavigationStack {
-            Form {
-                Section("Platform") {
-                    Picker("Platform", selection: $selectedPlatform) {
-                        ForEach(SocialPlatform.allCases, id: \.self) { platform in
-                            Text(platform.rawValue).tag(platform)
-                        }
-                    }
-                    .pickerStyle(.menu)
-                }
-
-                Section("Account Details") {
-                    TextField("Username (without @)", text: $username)
-                        .autocapitalization(.none)
-
-                    TextField("Followers", text: $followers)
-                        .keyboardType(.numberPad)
-
-                    TextField("Engagement Rate (%)", text: $engagementRate)
-                        .keyboardType(.decimalPad)
-                }
-            }
-            .navigationTitle("Add Social Account")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Add") {
-                        addAccount()
-                    }
-                    .disabled(username.isEmpty || followers.isEmpty)
-                    .fontWeight(.semibold)
-                }
-            }
-        }
-    }
-
-    private func addAccount() {
-        let account = SocialAccount(
-            platform: selectedPlatform,
-            username: username,
-            followers: Int(followers) ?? 0,
-            engagementRate: Double(engagementRate) ?? 0
-        )
-        socialAccounts.append(account)
-        Haptics.notification(.success)
-        dismiss()
     }
 }
 

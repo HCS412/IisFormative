@@ -67,7 +67,9 @@ FormativeiOS/
 │   ├── Message.swift
 │   ├── Notification.swift
 │   ├── Campaign.swift
-│   └── Team.swift
+│   ├── Team.swift
+│   ├── Application.swift
+│   └── SocialAccount.swift     # Social media account model
 │
 ├── ViewModels/                 # MVVM view models
 │   ├── AuthViewModel.swift
@@ -76,14 +78,19 @@ FormativeiOS/
 │   ├── MessagesViewModel.swift
 │   ├── NotificationsViewModel.swift
 │   ├── CampaignsViewModel.swift
-│   └── TeamsViewModel.swift
+│   ├── TeamsViewModel.swift
+│   ├── ApplicationsViewModel.swift
+│   └── SocialAccountsViewModel.swift  # Social accounts management
 │
 ├── Views/                      # UI screens
 │   ├── Auth/
 │   │   ├── LoginView.swift
 │   │   └── RegisterView.swift
 │   ├── Dashboard/
-│   │   └── DashboardView.swift
+│   │   ├── DashboardView.swift
+│   │   ├── CalendarSection.swift
+│   │   ├── RecommendedOpportunitiesSection.swift
+│   │   └── RecommendedOpportunityCard.swift
 │   ├── Opportunities/
 │   │   ├── OpportunitiesListView.swift
 │   │   └── OpportunityDetailView.swift
@@ -93,7 +100,8 @@ FormativeiOS/
 │   ├── Notifications/
 │   │   └── NotificationsView.swift
 │   ├── Profile/
-│   │   └── ProfileView.swift
+│   │   ├── ProfileView.swift
+│   │   └── SocialAccountsView.swift   # Connect social accounts
 │   ├── Campaigns/
 │   │   └── CampaignsListView.swift
 │   └── Teams/
@@ -137,18 +145,31 @@ FormativeiOS/
 
 ### ✅ Implemented
 
-- **Authentication** - Login, Register, JWT token management
-- **Dashboard** - Personalized greeting, stats, activity feed
-- **Opportunities** - Browse, search, filter, apply
-- **Messages** - Conversations and chat
-- **Notifications** - Notification center with filters
-- **Profile** - User profile and settings
+- **Authentication** - Login, Register, JWT token management, 2FA support
+- **Dashboard** - Personalized greeting, social stats, activity feed, calendar
+- **Social Media Integration** - Connect Twitter/X, Instagram, TikTok, YouTube, Bluesky
+- **Recommended Opportunities** - AI-powered recommendations carousel
+- **Opportunities** - Browse, search, filter, apply with share functionality
+- **Messages** - Conversations and real-time chat
+- **Notifications** - Activity feed from backend notifications
+- **Profile** - User profile, settings, media kit
 - **Campaigns** - Campaign management
-- **Teams** - Team collaboration
+- **Teams** - Team collaboration with invitation system
+- **Calendly Integration** - Schedule meetings via Calendly URL
+
+### 📊 Social Media Stats
+
+Connect your social accounts to display real-time metrics:
+- **Total Followers** - Aggregated across all platforms
+- **Engagement Rate** - Average engagement percentage
+- **Per-Platform Stats** - Individual follower counts
+- **OAuth Support** - Secure Twitter, Instagram, TikTok, YouTube connection
+- **Bluesky Verification** - Simple handle verification
 
 ### 🎨 Design System
 
 - **Glass Morphism** - Ultra-thin material with gradient borders
+- **Ice Cube Cards** - Frosted glass opportunity cards
 - **Liquid Blob Backgrounds** - Animated gradient blobs
 - **Spring Animations** - Natural, bouncy interactions
 - **Haptic Feedback** - Impact, notification, and selection feedback
@@ -158,11 +179,29 @@ FormativeiOS/
 
 ### Backend API
 
-Update the API base URL in `Services/APIClient.swift`:
+The app connects to the Formative backend hosted on Railway:
 
 ```swift
-private let baseURL = "https://your-api-url.com/api"
+// Services/APIClient.swift
+private let baseURL = "https://chic-patience-production.up.railway.app/api"
 ```
+
+### API Endpoints Used
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/auth/login` | POST | User login |
+| `/auth/register` | POST | User registration |
+| `/auth/2fa/verify` | POST | Two-factor verification |
+| `/user/profile` | GET/PUT | User profile management |
+| `/user/social-accounts` | GET | List connected social accounts |
+| `/oauth/{platform}/authorize` | GET | Initiate OAuth flow |
+| `/social/{platform}/stats` | GET | Refresh platform stats |
+| `/opportunities` | GET | List opportunities |
+| `/influencer/applications` | GET | User's applications |
+| `/messages/conversations` | GET | List conversations |
+| `/notifications` | GET | Activity notifications |
+| `/teams` | GET | User's teams |
 
 ### Info.plist
 

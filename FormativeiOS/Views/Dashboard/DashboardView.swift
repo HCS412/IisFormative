@@ -22,9 +22,20 @@ struct DashboardView: View {
                         .padding(.horizontal, .spacingL)
                         .padding(.top, .spacingL)
 
+                    // Social Media Stats (from connected accounts)
+                    if viewModel.socialStats.platformCount > 0 {
+                        socialStatsSection
+                    }
+
                     // Stats Cards
                     if let stats = viewModel.stats {
                         statsSection(stats: stats)
+                    }
+
+                    // Connect Social Accounts CTA (if no accounts connected)
+                    if viewModel.socialAccounts.isEmpty && !viewModel.isLoading {
+                        connectAccountsCTA
+                            .padding(.horizontal, .spacingL)
                     }
 
                     // Recommended Opportunities Carousel
@@ -110,6 +121,119 @@ struct DashboardView: View {
         }
     }
     
+    // MARK: - Social Stats Section
+    private var socialStatsSection: some View {
+        VStack(alignment: .leading, spacing: .spacingM) {
+            HStack {
+                HStack(spacing: .spacingS) {
+                    Image(systemName: "chart.bar.fill")
+                        .foregroundStyle(LinearGradient.brand)
+                    Text("Social Stats")
+                        .font(.headline)
+                        .foregroundColor(.adaptiveTextPrimary())
+                }
+
+                Spacer()
+
+                NavigationLink(destination: SocialAccountsView()) {
+                    Text("Manage")
+                        .font(.caption)
+                        .foregroundColor(.brandPrimary)
+                }
+            }
+            .padding(.horizontal, .spacingL)
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: .spacingM) {
+                    // Total Followers
+                    StatCard(
+                        icon: "person.2.fill",
+                        value: viewModel.socialStats.formattedFollowers,
+                        label: "Total Followers",
+                        gradient: LinearGradient.brand
+                    )
+                    .frame(width: 160)
+
+                    // Engagement Rate
+                    StatCard(
+                        icon: "chart.line.uptrend.xyaxis",
+                        value: viewModel.socialStats.formattedEngagement,
+                        label: "Avg Engagement",
+                        gradient: LinearGradient(
+                            colors: [Color.success, Color.success.opacity(0.7)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: 160)
+
+                    // Platforms Connected
+                    StatCard(
+                        icon: "link.circle.fill",
+                        value: "\(viewModel.socialStats.platformCount)",
+                        label: "Connected",
+                        gradient: LinearGradient(
+                            colors: [Color.brandSecondary, Color.brandSecondary.opacity(0.7)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: 160)
+
+                    // Individual platform stats
+                    ForEach(viewModel.socialAccounts, id: \.id) { account in
+                        StatCard(
+                            icon: account.platformType.icon,
+                            value: account.formattedFollowers,
+                            label: account.platformType.displayName,
+                            gradient: LinearGradient(
+                                colors: [Color(hex: account.platformType.brandColor), Color(hex: account.platformType.brandColor).opacity(0.7)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 160)
+                    }
+                }
+                .padding(.horizontal, .spacingL)
+            }
+        }
+    }
+
+    // MARK: - Connect Accounts CTA
+    private var connectAccountsCTA: some View {
+        NavigationLink(destination: SocialAccountsView()) {
+            GlassCard {
+                HStack(spacing: .spacingM) {
+                    Image(systemName: "link.badge.plus")
+                        .font(.title2)
+                        .foregroundStyle(LinearGradient.brand)
+                        .frame(width: 44, height: 44)
+                        .background(Color.brandPrimary.opacity(0.1))
+                        .cornerRadius(.radiusMedium)
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Connect Your Social Accounts")
+                            .font(.subhead)
+                            .fontWeight(.semibold)
+                            .foregroundColor(.adaptiveTextPrimary())
+
+                        Text("Link Twitter, Instagram, TikTok & more to showcase your reach")
+                            .font(.caption)
+                            .foregroundColor(.textSecondary)
+                    }
+
+                    Spacer()
+
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
+                        .foregroundColor(.textSecondary)
+                }
+            }
+        }
+        .buttonStyle(.plain)
+    }
+
     // MARK: - Stats Section
     private func statsSection(stats: DashboardStats) -> some View {
         ScrollView(.horizontal, showsIndicators: false) {
@@ -121,7 +245,7 @@ struct DashboardView: View {
                     gradient: LinearGradient.brand
                 )
                 .frame(width: 160)
-                
+
                 StatCard(
                     icon: "dollarsign.circle.fill",
                     value: formatCurrency(stats.earnings),
@@ -133,7 +257,7 @@ struct DashboardView: View {
                     )
                 )
                 .frame(width: 160)
-                
+
                 StatCard(
                     icon: "eye.fill",
                     value: "\(stats.profileViews)",
@@ -145,7 +269,7 @@ struct DashboardView: View {
                     )
                 )
                 .frame(width: 160)
-                
+
                 StatCard(
                     icon: "megaphone.fill",
                     value: "\(stats.campaigns)",
