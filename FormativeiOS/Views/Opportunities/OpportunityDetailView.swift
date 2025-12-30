@@ -10,6 +10,7 @@ import SwiftUI
 struct OpportunityDetailView: View {
     let opportunity: Opportunity
     @State private var showApplySheet = false
+    @State private var showShareSheet = false
     @State private var isDescriptionExpanded = false
     @State private var scrollOffset: CGFloat = 0
     @State private var showHeader = false
@@ -82,6 +83,7 @@ struct OpportunityDetailView: View {
             ToolbarItem(placement: .primaryAction) {
                 Button(action: {
                     Haptics.selection()
+                    showShareSheet = true
                 }) {
                     Image(systemName: "square.and.arrow.up")
                 }
@@ -89,6 +91,9 @@ struct OpportunityDetailView: View {
         }
         .sheet(isPresented: $showApplySheet) {
             ApplyToOpportunityView(opportunityId: opportunity.id)
+        }
+        .sheet(isPresented: $showShareSheet) {
+            ShareSheet(opportunity: opportunity)
         }
     }
 
@@ -478,6 +483,37 @@ struct ApplyToOpportunityView: View {
             }
         }
     }
+}
+
+// MARK: - Share Sheet
+struct ShareSheet: UIViewControllerRepresentable {
+    let opportunity: Opportunity
+
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        let shareText = """
+        Check out this opportunity on Formative!
+
+        \(opportunity.title)
+        \(opportunity.companyName)
+        Budget: \(opportunity.budget)
+
+        \(opportunity.description)
+        """
+
+        let items: [Any] = [shareText]
+        let controller = UIActivityViewController(activityItems: items, applicationActivities: nil)
+
+        // Exclude some activity types if needed
+        controller.excludedActivityTypes = [
+            .addToReadingList,
+            .assignToContact,
+            .openInIBooks
+        ]
+
+        return controller
+    }
+
+    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }
 
 // MARK: - Success Overlay

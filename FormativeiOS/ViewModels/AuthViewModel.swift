@@ -183,7 +183,7 @@ class AuthViewModel: ObservableObject {
         }
     }
 
-    func updateProfile(name: String?, bio: String?, website: String?, location: String?) async -> Bool {
+    func updateProfile(name: String?, bio: String?, website: String?, location: String?, calendlyUrl: String? = nil) async -> Bool {
         isLoading = true
         errorMessage = nil
 
@@ -192,7 +192,8 @@ class AuthViewModel: ObservableObject {
                 name: name,
                 bio: bio,
                 website: website,
-                location: location
+                location: location,
+                calendlyUrl: calendlyUrl
             )
             let body = try JSONEncoder().encode(request)
 

@@ -148,6 +148,43 @@ class DashboardViewModel: ObservableObject {
     func refresh() async {
         await loadDashboard(user: currentUser)
     }
+
+    // MARK: - Invitation Actions
+    func acceptInvitation(_ invitation: TeamInvitation) async -> Bool {
+        do {
+            let _: EmptyResponse = try await apiClient.request(
+                endpoint: "/teams/invitations/\(invitation.id)/accept",
+                method: "POST"
+            )
+            // Remove from pending list
+            pendingInvitations.removeAll { $0.id == invitation.id }
+            return true
+        } catch {
+            errorMessage = "Failed to accept invitation: \(error.localizedDescription)"
+            return false
+        }
+    }
+
+    func declineInvitation(_ invitation: TeamInvitation) async -> Bool {
+        do {
+            let _: EmptyResponse = try await apiClient.request(
+                endpoint: "/teams/invitations/\(invitation.id)/decline",
+                method: "POST"
+            )
+            // Remove from pending list
+            pendingInvitations.removeAll { $0.id == invitation.id }
+            return true
+        } catch {
+            errorMessage = "Failed to decline invitation: \(error.localizedDescription)"
+            return false
+        }
+    }
+}
+
+// MARK: - Empty Response for void endpoints
+struct EmptyResponse: Codable {
+    let success: Bool?
+    let message: String?
 }
 
 // MARK: - Calendar Deadline Model

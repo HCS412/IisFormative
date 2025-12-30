@@ -31,11 +31,11 @@ struct ConversationsListView: View {
                     ProgressView()
                 } else if filteredConversations.isEmpty {
                     EmptyStateView(
-                        icon: "message",
+                        icon: "message.fill",
                         title: "No Messages Yet",
                         message: "Start a conversation to connect with brands and creators.",
-                        actionTitle: nil,
-                        action: nil
+                        actionTitle: "New Message",
+                        action: { showNewMessage = true }
                     )
                 } else {
                     List {

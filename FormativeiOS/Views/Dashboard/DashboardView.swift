@@ -237,7 +237,7 @@ struct DashboardView: View {
             GlassCard {
                 VStack(alignment: .leading, spacing: .spacingM) {
                     ForEach(viewModel.pendingInvitations) { invitation in
-                        InvitationRow(invitation: invitation)
+                        InvitationRow(invitation: invitation, viewModel: viewModel)
                     }
                 }
             }
@@ -315,32 +315,71 @@ struct ActivityRow: View {
 // MARK: - Invitation Row
 struct InvitationRow: View {
     let invitation: TeamInvitation
-    
+    @ObservedObject var viewModel: DashboardViewModel
+    @State private var isProcessing = false
+
     var body: some View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Team Invitation")
                     .font(.subhead)
                     .fontWeight(.semibold)
-                
+
                 Text("\(invitation.inviterName) invited you to join \(invitation.teamName)")
                     .font(.caption)
                     .foregroundColor(.textSecondary)
             }
-            
+
             Spacer()
-            
-            HStack(spacing: .spacingS) {
-                Button("Decline") {
-                    // Handle decline
+
+            if isProcessing {
+                ProgressView()
+                    .scaleEffect(0.8)
+            } else {
+                HStack(spacing: .spacingS) {
+                    Button("Decline") {
+                        declineInvitation()
+                    }
+                    .font(.caption)
+                    .foregroundColor(.error)
+
+                    Button(action: acceptInvitation) {
+                        Text("Accept")
+                            .font(.caption)
+                            .fontWeight(.semibold)
+                            .foregroundColor(.white)
+                            .padding(.horizontal, .spacingM)
+                            .padding(.vertical, .spacingS)
+                            .background(LinearGradient.brand)
+                            .cornerRadius(.radiusSmall)
+                    }
                 }
-                .font(.caption)
-                .foregroundColor(.error)
-                
-                PrimaryButton(title: "Accept", action: {
-                    // Handle accept
-                })
-                .frame(width: 80, height: 32)
+            }
+        }
+    }
+
+    private func acceptInvitation() {
+        isProcessing = true
+        Task {
+            let success = await viewModel.acceptInvitation(invitation)
+            isProcessing = false
+            if success {
+                Haptics.notification(.success)
+            } else {
+                Haptics.notification(.error)
+            }
+        }
+    }
+
+    private func declineInvitation() {
+        isProcessing = true
+        Task {
+            let success = await viewModel.declineInvitation(invitation)
+            isProcessing = false
+            if success {
+                Haptics.notification(.success)
+            } else {
+                Haptics.notification(.error)
             }
         }
     }

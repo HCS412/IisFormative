@@ -264,6 +264,7 @@ struct EditProfileView: View {
     @State private var bio: String = ""
     @State private var website: String = ""
     @State private var location: String = ""
+    @State private var calendlyUrl: String = ""
     @State private var isSaving = false
     @State private var showSuccessAlert = false
     @State private var errorMessage: String?
@@ -289,6 +290,17 @@ struct EditProfileView: View {
                         .textContentType(.URL)
                         .keyboardType(.URL)
                         .autocapitalization(.none)
+                }
+
+                Section {
+                    TextField("Calendly URL", text: $calendlyUrl)
+                        .textContentType(.URL)
+                        .keyboardType(.URL)
+                        .autocapitalization(.none)
+                } header: {
+                    Text("Scheduling")
+                } footer: {
+                    Text("Add your Calendly link to let others book meetings with you")
                 }
 
                 if let error = errorMessage {
@@ -343,6 +355,7 @@ struct EditProfileView: View {
             bio = user.profileData?.bio ?? ""
             website = user.profileData?.website ?? ""
             location = user.profileData?.location ?? ""
+            calendlyUrl = user.profileData?.calendlyUrl ?? ""
         }
     }
 
@@ -355,7 +368,8 @@ struct EditProfileView: View {
                 name: name.isEmpty ? nil : name,
                 bio: bio.isEmpty ? nil : bio,
                 website: website.isEmpty ? nil : website,
-                location: location.isEmpty ? nil : location
+                location: location.isEmpty ? nil : location,
+                calendlyUrl: calendlyUrl.isEmpty ? nil : calendlyUrl
             )
 
             isSaving = false
